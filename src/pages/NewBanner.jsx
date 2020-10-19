@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { IoIosArrowDown } from "react-icons/io";
 import { IoClose } from "react-icons/io5";
 import gallery from "../Assets/gallery.png";
+import { setActiveLink } from "react-scroll/modules/mixins/scroller";
 
 const NewBanner = ({ isOpen, onClose, onAddBanner }) => {
   const [title, setTitle] = useState("");
@@ -9,6 +10,8 @@ const NewBanner = ({ isOpen, onClose, onAddBanner }) => {
   const [categoryId, setCategoryId] = useState("");
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [fileImage, setfileImage] = useState("");
+  const [value, setValue] = useState("");
+  const [Link, setLink] = useState("");
 
   if (!isOpen) return null;
 
@@ -30,6 +33,7 @@ const NewBanner = ({ isOpen, onClose, onAddBanner }) => {
       resource_type: resourceType,
       category_id: categoryId,
       image: fileImage, // Placeholder since we are not uploading an image
+      link : Link
     };
 
     // Call the parent function to submit the data
@@ -85,7 +89,14 @@ const NewBanner = ({ isOpen, onClose, onAddBanner }) => {
                   type="radio"
                   name="resourceType"
                   value="category"
-                  onChange={() => setResourceType("category wise")}
+                  id="1"
+                  onChange={(e) => {
+                    setResourceType("category wise")
+                    setValue(e.target.id)
+                    setCategoryId(e.target.id)
+                    console.log(value);
+                    
+                  }}
                 />
                 <span className="ml-2">Category Wise</span>
               </label>
@@ -94,7 +105,12 @@ const NewBanner = ({ isOpen, onClose, onAddBanner }) => {
                   type="radio"
                   name="resourceType"
                   value="service"
-                  onChange={() => setResourceType("service wise")}
+                  id="2"
+                  onChange={(e) => {
+                    setResourceType("service wise")
+                    setCategoryId(e.target.id)
+                    setValue(e.target.id)
+                  }}
                 />
                 <span className="ml-2">Service Wise</span>
               </label>
@@ -103,7 +119,12 @@ const NewBanner = ({ isOpen, onClose, onAddBanner }) => {
                   type="radio"
                   name="resourceType"
                   value="link"
-                  onChange={() => setResourceType("link wise")}
+                  id="3"
+                  onChange={(e) => {
+                    setResourceType("link wise")
+                    setValue(e.target.id)
+                    setCategoryId(e.target.id)
+                  }}
                 />
                 <span className="ml-2">Redirect Link</span>
               </label>
@@ -113,9 +134,13 @@ const NewBanner = ({ isOpen, onClose, onAddBanner }) => {
           <div className="relative mb-4">
             <input
               type="text"
-              placeholder="Search"
+              placeholder={value != "3"? "Search" : "URL"}
               className="w-full py-2 px-4 pr-10 border border-gray-300 rounded-lg"
-            
+              id="4"
+              onChange={(e)=>{
+                setCategoryId(e.target.id)
+                setLink(e.target.value)
+              }}
             />
             <IoIosArrowDown
               onClick={toggleDropdown}

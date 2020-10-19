@@ -47,7 +47,7 @@ const OnboardingRequests = () => {
           key={idx}
           className="flex items-center justify-between h-18 max-h-18 p-2 border-b-[1px] font-inter"
         >
-          <div className="flex items-center gap-2">
+          <div className="flex gap-2">
             <div className="Image w-12 h-12 rounded-full bg-gray-300 overflow-hidden">
               <img
                 src={requests.img}

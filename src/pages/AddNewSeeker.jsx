@@ -26,14 +26,23 @@ const AddNewSeeker = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+
+  function base64ToBlob(base64, type = 'image/png') {
+    const byteCharacters = atob(base64);
+    const byteNumbers = new Uint8Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    return new Blob([byteNumbers], { type });
+  }
   
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setSelectedImage(reader.result);
-        console.log(file)
+        setSelectedImage(file);
+        console.log(selectedImage)
       };
       reader.readAsDataURL(file);
     }
