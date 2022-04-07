@@ -18,6 +18,8 @@ const PromoTable = ({ banners = [] }) => {
 
   useEffect(() => {
     dispatch(fetchCategories());
+    console.log(banners);
+    
   }, [dispatch]);
 
   const handleThreeDotsClick = (bannerId) => {

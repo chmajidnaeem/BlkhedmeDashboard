@@ -29,7 +29,7 @@ export const fetchSeekers = createAsyncThunk('seekers/fetchSeekers', async () =>
 export const addSeeker = createAsyncThunk('seekers/addSeeker', async (newSeeker) => {
   try {
     const seekerToAdd = {
-      image: newSeeker.profile_image, // this will submit the image with field name profile_image to the server change as per your needs
+      profile_image: newSeeker.profile_image, // this will submit the image with field name profile_image to the server change as per your needs
       ratings: "0", // Default ratings
       calls: "0",   // Default call count
       reviews: "0", // Default review count
@@ -46,7 +46,7 @@ export const addSeeker = createAsyncThunk('seekers/addSeeker', async (newSeeker)
     const response = await axios.post(`${API_URL}/store`, seekerToAdd, {
       headers: {
         Authorization: `Bearer ${getAuthToken()}`,
-        // 'Content-Type': 'application/json',
+       'Content-Type': 'multipart/form-data'
       },
     });
     

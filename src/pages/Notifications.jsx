@@ -53,7 +53,7 @@ const Notifications = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setfileDoc(reader.result);
-        console.log(file)
+        console.log(fileDoc)
       };
       reader.readAsDataURL(file);
     }

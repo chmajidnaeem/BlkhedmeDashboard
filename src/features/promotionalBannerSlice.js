@@ -32,7 +32,7 @@ export const createBanner = createAsyncThunk(
         const { image, ...dataWithoutImage } = bannerData;
   
         // Send only the fields which are accepted by the server
-        const response = await axios.post(`${API_URL}/store/Update`, dataWithoutImage, {
+        const response = await axios.post(`${API_URL}/store/Update`, bannerData, {
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: 'application/json',

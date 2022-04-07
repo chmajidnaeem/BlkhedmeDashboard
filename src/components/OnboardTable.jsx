@@ -127,7 +127,7 @@ const OnboardTable = ({ activeTab }) => {
       ) : (
         <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow-md mb-20">
           <thead>
-            <tr className="bg-[#8498E0] text-white text-xs text-center">
+            <tr className="bg-[#8498E0] text-white text-xs ">
               <th className="p-3 ">
                 <span className="block py-2 px-3 border-r border-gray-300">
                   <input type="checkbox" className="h-4 w-4 rounded" />
@@ -185,8 +185,8 @@ const OnboardTable = ({ activeTab }) => {
                   <input type="checkbox" className="h-4 w-4 rounded" />
                 </td>
                 <td className="p-3 text-center">{`0${index + 1}`}</td>
-                <td className="p-3 text-center">
-                  <div className="flex items-center justify-center space-x-2">
+                <td className="p-3">
+                  <div className="flex items-center space-x-2">
                     <img
                       src={request.image || notificationImg} // Use default image if request.image is null
                       alt="Provider"
