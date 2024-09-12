@@ -1,0 +1,7 @@
+blueColor: #2B4DC9
+buttonColor: #0085FF
+textColor: #707070
+font: poppins
+headingFont: Montserrat
+primaryBackground: #FFFFFF
+secondaryBackground: #F5F5F5
