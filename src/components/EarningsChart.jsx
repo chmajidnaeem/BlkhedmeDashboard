@@ -16,6 +16,9 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 const EarningsChart = () => {
   const [period, setPeriod] = useState('weekly');
 
+  
+  const dateLabels = ['20 July, 2024', '21 July, 2024', '22 July, 2024', '23 July, 2024', '24 July, 2024', '25 July, 2024', '26 July, 2024'];
+
   // Data for the line chart
   const data = {
     labels: ['', '', '', '', '', '', ''], 
@@ -24,30 +27,44 @@ const EarningsChart = () => {
         label: 'Total Earning ($)',
         data: [300, 500, 400, 600, 750, 850, 900],
         borderColor: '#6C0FD7', 
-        backgroundColor: '#6C0FD7',
-        fill: false,
+        backgroundColor: function(context) {
+          const gradient = context.chart.ctx.createLinearGradient(0, 0, 0, 300);
+          gradient.addColorStop(0, 'rgba(108, 15, 215, 0.5)');
+          gradient.addColorStop(1, 'rgba(108, 15, 215, 0)');
+          return gradient;
+        },
+        fill: true,
         tension: 0.4,
       },
       {
         label: 'Fee Earning ($)',
         data: [430, 60, 70, 100, 120, 130, 500],
         borderColor: '#F07D00', 
-        backgroundColor: '#F07D00',
-        fill: false,
+        backgroundColor: function(context) {
+          const gradient = context.chart.ctx.createLinearGradient(0, 0, 0, 300);
+          gradient.addColorStop(0, 'rgba(240, 125, 0, 0.5)');
+          gradient.addColorStop(1, 'rgba(240, 125, 0, 0)');
+          return gradient;
+        },
+        fill: true,
         tension: 0.4,
       },
       {
         label: 'Promotion Earning ($)',
-        data: [ 340, 45, 50, 60, 55,480,500],
+        data: [340, 45, 50, 60, 55, 480, 500],
         borderColor: '#0085FF', 
-        backgroundColor: '#0085FF',
-        fill: false,
+        backgroundColor: function(context) {
+          const gradient = context.chart.ctx.createLinearGradient(0, 0, 0, 300);
+          gradient.addColorStop(0, 'rgba(0, 133, 255, 0.5)');
+          gradient.addColorStop(1, 'rgba(0, 133, 255, 0)');
+          return gradient;
+        },
+        fill: true,
         tension: 0.4,
       },
     ],
   };
 
-  
   const options = {
     responsive: true,
     maintainAspectRatio: false,
@@ -57,7 +74,7 @@ const EarningsChart = () => {
           display: false, 
         },
         ticks: {
-          display: false, 
+          display: false,  // Hides ticks on x-axis
         },
       },
       y: {
@@ -72,10 +89,37 @@ const EarningsChart = () => {
       },
     },
     plugins: {
+      tooltip: {
+        backgroundColor: '#ffffff', // White background
+        titleColor: '#000000', // Black title text
+        bodyColor: '#000000', // Black body text
+        borderColor: '#808080', // No border color (or match background)
+        borderWidth: 1, // Remove border
+        caretPadding: 10, // Distance between point and tooltip
+        caretSize: 6, // Size of the tooltip pointer
+        displayColors: false, // Disable color box next to tooltip
+        callbacks: {
+          label: function(context) {
+            const value = context.raw;
+            const date = dateLabels[context.dataIndex]; // Use the date from dateLabels array
+            return [` $${value}`, `${date}`];
+          },
+          labelPointStyle: function () {
+            return {
+              pointStyle: false, // Disable the point (square)
+              rotation: 0, // Ensure no visual point is added
+            };
+          },
+        },
+        // Adjust the position of the tooltip arrow
+        caretSize: 6, // Adjust this value as needed
+        caretPadding: 8, // Adjust this value to position the tooltip correctly
+        yAlign: 'bottom', // Position tooltip arrow at the bottom
+      },
+      
       legend: {
         display: false, 
       },
-      
     },
   };
 
@@ -94,12 +138,12 @@ const EarningsChart = () => {
         </select>
       </div>
 
-      <div className="w-full h-52"> 
-        <Line data={data} options={options} />
+      <div className="w-full h-[40vh] md:h-62 lg:h-72"> 
+        <Line data={data} options={{...options, responsive:true}} />
       </div>
 
       {/* Custom Legend with dots */}
-      <div className="flex justify-center mt-4 space-x-8 text-sm font-poppins">
+      <div className="flex justify-center mt-4 space-x-8 text-[8px] sm:text-[10px] font-poppins">
         <div className="flex items-center">
           <span className="w-3 h-3 bg-[#6C0FD7] inline-block rounded-full mr-2"></span>
           <span>Total Earning</span>

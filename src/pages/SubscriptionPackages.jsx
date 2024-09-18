@@ -1,8 +1,11 @@
 import React from 'react'
+import SubscriptionPackageList from './SubscriptionPackageList'
 
 const SubscriptionPackages = () => {
   return (
-    <div>SubscriptionPackages</div>
+    <div>
+      <SubscriptionPackageList />
+    </div>
   )
 }
 
