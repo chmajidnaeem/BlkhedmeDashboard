@@ -1,5 +1,7 @@
 import React, { useState, useRef } from "react";
 import { FaBuffer,FaRegImage } from "react-icons/fa";
+import axios from 'axios'
+import { useEffect } from "react";
 
 
 const SubCategorySetup = () => {
@@ -7,6 +9,7 @@ const SubCategorySetup = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const fileInputRef = useRef(null);
   const [showUploadArea, setShowUploadArea] = useState(true);
+  const [locations, setLocations] = useState([])
 
   const handleFileChange = (event) => {
     if (event.target.files.length > 0) {
@@ -22,6 +25,20 @@ const SubCategorySetup = () => {
       fileInputRef.current.click();
     }
   };
+
+  const fetchData = async () => {
+    try {
+      const {data} = await axios.get('https://apiv2.blkhedme.com/api/locations/show');
+      setLocations(data.location)
+      
+    } catch (error) {
+      console.error('There was an error fetching the data!', error);
+    }
+  };
+  
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
@@ -80,17 +97,20 @@ const SubCategorySetup = () => {
             Select City
           </label>
           <div className="relative">
-            <select className="w-full p-3 border rounded-md focus:outline-none ">
-              <option value="">Select City</option>
-              <option value="Karachi">Karachi</option>
-              <option value="Peshawar">Peshawar</option>
+            <select className="w-1/2 md:w-full p-3 border rounded-md focus:outline-none ">
+            <option value="">Select City</option>
+                {locations.map((location,index)=>(
+              <option value="Karachi" key={index}>{location.title}</option>
+            ))}
             </select>
             
           </div>
         </div>
         <div className="mb-6">
             <label htmlFor="description" className="block text-gray-600 font-semibold mb-2">Description (Default)</label>
+            
             <textarea name="description" id="description" placeholder="Enter Description" className="w-full border rounded-md focus:outline-none p-3 min-h-32"></textarea>
+         
         </div>
 
        

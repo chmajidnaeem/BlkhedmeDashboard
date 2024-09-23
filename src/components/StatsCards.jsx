@@ -1,5 +1,7 @@
-// src/components/StatsCards.jsx
+
 const StatsCards = () => {
+  // Inside a React component or function
+
     const stats = [
       { amount: "$12,524.00", label: "Total Earning", color: "bg-[#6C0FD7]" },
       { amount: "$12,524.00", label: "Fee Earning", color: "bg-[#F07D00]" },
