@@ -1,60 +1,57 @@
-
-
 import { useState } from "react"; // Importing React state management hook
 import { BsEyeSlash, BsEye } from "react-icons/bs"; // Importing both eye icons for password visibility toggle
 import { useNavigate } from "react-router-dom"; // Importing navigation hook to redirect user upon successful login
 
 const LoginPage = () => {
   // State variable to store the user's email input
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(localStorage.getItem("email") || ""); // Check if email exists in localStorage
+  const [password, setPassword] = useState(""); // Store the user's password input
+  const [error, setError] = useState(""); // Store error messages
+  const [showPassword, setShowPassword] = useState(false); // Toggle password visibility
+  const [loading, setLoading] = useState(false); // Loading state for async requests
+  const [rememberMe, setRememberMe] = useState(false); // "Remember me" checkbox state
 
-  // State variable to store the user's password input
-  const [password, setPassword] = useState("");
+  const navigate = useNavigate(); // Navigation hook for redirecting users
 
-  // State variable to store and display error messages in case of failed login attempts
-  const [error, setError] = useState("");
-
-  // State variable to toggle password visibility
-  const [showPassword, setShowPassword] = useState(false);
-
-  // Hook to navigate the user to another page after successful login
-  const navigate = useNavigate();
-
-  // Function to handle the form submission when the user attempts to log in
+  // Function to handle the form submission
   const handleLogin = async (e) => {
     e.preventDefault(); // Prevent the form from refreshing the page on submit
+    setError("")
+    setLoading(true); // Set loading state to true while processing
 
     try {
       // Sending a POST request to the login API endpoint with email and password
-      const response = await fetch(
-        "https://apiv2.blkhedme.com/api/admin/login",
-        {
-          method: "POST", // Specify that we are making a POST request
-          headers: {
-            "Content-Type": "application/json", // Ensure the request is sent as JSON
-          },
-          body: JSON.stringify({
-            email, // Send the email state variable as part of the request body
-            password, // Send the password state variable as part of the request body
-          }),
-        }
-      );
+      const response = await fetch("https://apiv2.blkhedme.com/api/admin/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-      // Parse the response data from the server into JSON format
-      const data = await response.json();
-      
+      const data = await response.json(); // Parse the response data
 
       if (response.ok) {
-        // If the response status is OK (200), navigate the user to the homepage
-        navigate("/"); // You can change "/" to the path you want to redirect the user to
+        // If login is successful
+        localStorage.setItem("token", data.token); // Store the authentication token in localStorage
+
+        // If "Remember me" is checked, save the email to localStorage
+        if (rememberMe) {
+          localStorage.setItem("email", email);
+        } else {
+          localStorage.removeItem("email");
+        }
+
+        // Redirect to the dashboard or any other protected route
+        navigate("/");
       } else {
-        // If the response is not OK, show an error message to the user
-        setError("Invalid credentials, please try again.");
+        setError(data.message || "Invalid credentials, please try again.");
       }
-    } catch (error) {
-      // If there is an error during the request (e.g., network error), catch it and display a message
-      console.error("Error during login:", error);
+    } catch (err) {
+      console.error("Error during login:", err);
       setError("An error occurred. Please try again later.");
+    } finally {
+      setLoading(false); // Turn off the loading spinner when the request is complete
     }
   };
 
@@ -77,28 +74,28 @@ const LoginPage = () => {
             <div className="mb-4">
               <input
                 type="email"
-                value={email} // Controlled input bound to the email state
-                onChange={(e) => setEmail(e.target.value)} // Update state when the user types
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter email"
                 className="w-full p-3 border border-gray-300 rounded-lg"
-                required // Ensures the field is filled before submission
+                required
               />
             </div>
 
             {/* Password Input Field */}
             <div className="mb-4 relative">
               <input
-                type={showPassword ? "text" : "password"} // Conditionally change input type based on showPassword state
-                value={password} // Controlled input bound to the password state
-                onChange={(e) => setPassword(e.target.value)} // Update state when the user types
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
                 className="w-full p-3 border border-gray-300 rounded-lg"
-                required // Ensures the field is filled before submission
+                required
               />
               {/* Toggle eye icon */}
               <div
                 className="absolute right-4 top-4 cursor-pointer"
-                onClick={() => setShowPassword(!showPassword)} // Toggle showPassword state on icon click
+                onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? (
                   <BsEye className="text-[#707070]" />
@@ -111,22 +108,34 @@ const LoginPage = () => {
             {/* Error Message */}
             {error && <div className="mb-4 text-red-600 text-sm">{error}</div>}
 
+            {/* Loading Indicator */}
+            {loading && (
+              <div className="mb-4 text-blue-600 text-sm">Loading...</div>
+            )}
+
             {/* Remember Me Checkbox */}
             <div className="mb-6 flex items-center text-[#707070]">
-              <input type="radio" id="remember" className="mr-2" />
+              <input
+                type="checkbox"
+                id="remember"
+                checked={rememberMe}
+                onChange={() => setRememberMe(!rememberMe)}
+                className="mr-2"
+              />
               <label htmlFor="remember">Remember me</label>
             </div>
 
             {/* Submit Button */}
             <button
-              type="submit" // When clicked, the form is submitted, triggering handleLogin
+              type="submit"
               className="w-full bg-[#0085FF] text-white py-3 rounded-lg font-semibold"
+              disabled={loading} // Disable the button while loading
             >
-              Sign In
+              {loading ? "Signing In..." : "Sign In"} {/* Show loader text */}
             </button>
           </form>
 
-          {/* Decorative Circles (for aesthetic purposes) */}
+          {/* Decorative Circles */}
           <div className="absolute -bottom-6 -right-6 w-28 h-28 bg-[#2B4DC9] rounded-full"></div>
           <div className="absolute bottom-4 left-4 w-20 h-20 bg-[#2B4DC9] rounded-full"></div>
           <div className="absolute top-6 right-10 md:right-20 w-20 h-20 bg-[#2B4DC9] rounded-full"></div>
@@ -135,12 +144,9 @@ const LoginPage = () => {
         </div>
       </div>
 
-      {/* Right Section (only visible on larger screens) */}
+      {/* Right Section */}
       <div className="hidden bg-[#2B4DC9] md:flex flex-col justify-center items-center w-1/2">
-        {/* Blkedme branding */}
-        <h1 className="text-white text-6xl font-bold font-montserrat">
-          Blkedme
-        </h1>
+        <h1 className="text-white text-6xl font-bold font-montserrat">Blkedme</h1>
         <h1 className="text-white text-6xl font-montserrat font-bold opacity-20 -mt-2 transform scale-y-[-1]">
           Blkedme
         </h1>

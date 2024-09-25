@@ -1,130 +1,206 @@
-import React, { useState } from "react";
-import { FiMoreVertical } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useRef, useEffect } from "react";
+import { FaBuffer, FaRegImage } from "react-icons/fa";
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchSubCategory, clearSubCategory } from '../redux/slices/subcategorySlice';
+import axios from 'axios';
 
 const SubCategorySetup = () => {
-  const [dropdownOpen, setDropdownOpen] = useState(null);
-  const [categories, setCategories] = useState([
-    {
-      id: 1,
-      name: "Office Shifting",
-      ParentCategory: "Shifting",
-      NumberOfProvider: 89,
-      isFeatured: true,
-    },
-    {
-      id: 2,
-      name: "Bachelor Shifting",
-      ParentCategory: "Shifting",
-      NumberOfProvider: 89,
-      isFeatured: true,
-    },
-    {
-      id: 3,
-      name: "Interior Design",
-      ParentCategory: "Painting and Renovation",
-      NumberOfProvider: 89,
-      isFeatured: true,
-    },
-    
-  ]);
+  const [language, setLanguage] = useState("default");
+  const [selectedFile, setSelectedFile] = useState(null);
+  const fileInputRef = useRef(null);
+  const [showUploadArea, setShowUploadArea] = useState(true);
+  const [locations, setLocations] = useState([]);
+  const [categoryName, setCategoryName] = useState('');
+  const [description, setDescription] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
 
-  const toggleDropdown = (index) => {
-    setDropdownOpen(dropdownOpen === index ? null : index);
+  const dispatch = useDispatch();
+  const subCategory = useSelector((state) => state.subCategory);
+  
+  const handleFileChange = (event) => {
+    if (event.target.files.length > 0) {
+      setSelectedFile(event.target.files[0]);
+      setShowUploadArea(false);
+    }
   };
 
-
-  const toggleFeatured = (index) => {
-    const updatedCategories = categories.map((category, i) =>
-      i === index ? { ...category, isFeatured: !category.isFeatured } : category
-    );
-    setCategories(updatedCategories);
+  const handleClickUpload = (event) => {
+    event.stopPropagation();
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
   };
-  const navigate = useNavigate()
+
+  const fetchLocations = async () => {
+    try {
+      const { data } = await axios.get('https://apiv2.blkhedme.com/api/locations/show');
+      setLocations(data.location);
+    } catch (error) {
+      console.error('There was an error fetching the data!', error);
+    }
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault(); // Prevent default form submission
+
+    const formData = new FormData();
+    formData.append('categoryName', categoryName);
+    formData.append('description', description);
+    formData.append('city', selectedCity);
+    if (selectedFile) {
+      formData.append('file', selectedFile);
+    }
+
+    try {
+      const response = await axios.post('/api/subcategories', formData);
+      if (response.data.success) {
+        // Optionally reset the form state here
+        setCategoryName('');
+        setDescription('');
+        setSelectedCity('');
+        setSelectedFile(null);
+        setShowUploadArea(true);
+        
+        // Fetch subcategories after a successful submission
+        dispatch(fetchSubCategory(response.data.id)); // Adjust based on your response structure
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchLocations();
+    return () => {
+      dispatch(clearSubCategory()); // Clear subcategory on unmount
+    };
+  }, [dispatch]);
 
   return (
-    <> 
-    <div className="space-y-2 font-poppins">
-      <div className="flex items-center justify-between">
-        <h1 className="font-semibold">Sub Category Setup</h1>
-       
-    <button className="bg-blue-500 text-white px-6 py-2 rounded-lg shadow-md"
-    onClick={() => navigate("/add-new-sub-category")}
-    >Add New</button>
-  
-      </div>
-   
+    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+      <div className="w-full max-w-lg bg-white p-8 shadow-lg rounded-lg">
+        <h1 className="text-2xl font-bold text-black mb-6">Sub Category Setup</h1>
 
-  {/* Tabs Section */}
-  <div className="flex space-x-4 border-b-[2px]">
-    <button className="font-semibold">All</button>
-    <button className="font-medium text-gray-500">Active</button>
-    <button className="font-medium text-gray-500">Inactive</button>
-  </div>
-    <div className="w-full overflow-x-auto px-1">
-    <table className="table-auto w-full bg-white shadow-md rounded-lg font-inter">
-  <thead>
-    <tr className="bg-[#2b4dc974] text-[12px] text-white text-center h-14">
-      <th className="relative p-1 md:p-3">
-        <input type="checkbox" className="w-4 h-4" />
-      </th>
-      <th className="relative p-1 md:p-3">Sl<span className="absolute top-0 bottom-0 right-0 h-[75%] w-[1px] bg-white m-auto"></span></th>
-      <th className="relative p-1 md:p-3">Name<span className="absolute top-0 bottom-0 right-0 h-[75%] w-[1px] bg-white m-auto"></span></th>
-      <th className="relative p-1 md:p-3">Parent Category<span className="absolute top-0 bottom-0 right-0 h-[75%] w-[1px] bg-white m-auto"></span></th>
-      <th className="relative p-1 md:p-3">Number of Providers<span className="absolute top-0 bottom-0 right-0 h-[75%] w-[1px] bg-white m-auto"></span></th>
-      <th className="relative p-1 md:p-3">Is Featured<span className="absolute top-0 bottom-0 right-0 h-[75%] w-[1px] bg-white m-auto"></span></th>
-      <th className="p-2">Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    {categories.map((category, index) => (
-      <tr
-        key={category.id}
-        className="border-b text-sm text-center text-gray-600 h-12"
-      >
-        <td className="p-2">
-          <input type="checkbox" className="w-4 h-4" />
-        </td>
-        <td className="p-2">{index + 1}</td>
-        <td className="p-2">{category.name}</td>
-        <td className="p-2">{category.ParentCategory}</td>
-        <td className="p-2">{category.NumberOfProvider}</td>
-        <td className="p-2">
-          <label className="inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              checked={category.isFeatured}
-              onChange={() => toggleFeatured(index)}
-              className="sr-only peer"
-            />
-            <div className="relative w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-          </label>
-        </td>
-        <td className="relative p-2">
-          <button
-            className="hover:bg-gray-100 cursor-pointer p-1 rounded-full"
-            onClick={() => toggleDropdown(index)}
-            aria-label="Actions"
-          >
-            <FiMoreVertical />
-          </button>
-          {dropdownOpen === index && (
-            <div className="absolute right-0 top-8 bg-white border shadow-md z-10 w-36">
-              <ul>
-                <li className="hover:bg-gray-100 cursor-pointer p-2">Edit</li>
-                <li className="hover:bg-gray-100 cursor-pointer p-2">Delete</li>
-              </ul>
+        <form onSubmit={handleSubmit}>
+          <div className="flex space-x-4 mb-6">
+            <button
+              type="button"
+              className={`px-4 py-2 rounded-md ${language === "default" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+              onClick={() => setLanguage("default")}
+            >
+              Default
+            </button>
+            <button
+              type="button"
+              className={`px-4 py-2 rounded-md ${language === "english" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+              onClick={() => setLanguage("english")}
+            >
+              English
+            </button>
+            <button
+              type="button"
+              className={`px-4 py-2 rounded-md ${language === "arabic" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+              onClick={() => setLanguage("arabic")}
+            >
+              Arabic - العربية
+            </button>
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-gray-600 font-semibold mb-2">
+              Category Name (Default)
+            </label>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+                <FaBuffer className="h-5 w-5 text-gray-400" />
+              </span>
+              <input
+                type="text"
+                placeholder="Enter Category Name"
+                value={categoryName}
+                onChange={(e) => setCategoryName(e.target.value)}
+                className="w-full pl-10 p-3 border rounded-md focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-gray-600 font-semibold mb-2">
+              Select City
+            </label>
+            <div className="relative">
+              <select
+                value={selectedCity}
+                onChange={(e) => setSelectedCity(e.target.value)}
+                className="w-1/2 md:w-full p-3 border rounded-md focus:outline-none"
+              >
+                <option value="">Select City</option>
+                {locations.map((location, index) => (
+                  <option value={location.id} key={index}>{location.title}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <label htmlFor="description" className="block text-gray-600 font-semibold mb-2">Description (Default)</label>
+            <textarea
+              name="description"
+              id="description"
+              placeholder="Enter Description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full border rounded-md focus:outline-none p-3 min-h-32"
+            ></textarea>
+          </div>
+
+          {showUploadArea ? (
+            <div
+              className="mb-6 border-2 border-dashed border-gray-300 rounded-md flex justify-center items-center h-48 cursor-pointer relative"
+            >
+              <div className="text-center">
+                <FaRegImage className="h-16 w-16 mx-auto mb-4 text-gray-400" onClick={handleClickUpload} />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                />
+                <p className="text-gray-500">Upload Photo</p>
+                <p className="text-gray-400 text-xs mt-2">
+                  Image format - jpg png jpeg gif image <br />
+                  size - maximum size 2 MB Image Ratio - 1:1
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="mb-6 text-center">
+              <p className="text-gray-600">Selected File:</p>
+              <p className="text-gray-500">{selectedFile.name}</p>
             </div>
           )}
-        </td>
-      </tr>
-    ))}
-  </tbody>
-</table>
 
+          <div className="flex justify-end gap-4">
+            <button type="button" className="bg-gray-200 text-gray-700 px-6 py-2 rounded-md" onClick={() => setShowUploadArea(true)}>
+              RESET
+            </button>
+            <button type="submit" className="bg-blue-500 text-white px-6 py-2 rounded-md">
+              SUBMIT
+            </button>
+          </div>
+        </form>
+
+        {subCategory.loading && <p>Loading...</p>}
+        {subCategory.error && <p className="text-red-500">{subCategory.error}</p>}
+        {subCategory.data && (
+          <div className="mt-4">
+            <h2 className="text-lg font-bold">Subcategory Details</h2>
+            <pre>{JSON.stringify(subCategory.data, null, 2)}</pre>
+          </div>
+        )}
+      </div>
     </div>
-    </div>
-    </>
   );
 };
 

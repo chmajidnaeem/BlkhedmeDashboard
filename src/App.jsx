@@ -224,7 +224,6 @@
 // }
 
 // export default App;
-
 import React, { useState, useEffect } from "react"; // Import React hooks for managing state and side effects
 import "./App.css"; // Importing custom CSS file for styling
 import {
@@ -270,6 +269,8 @@ function App() {
    * `setIsAuthenticated`: Function to update the authentication status.
    */
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(false); // State to manage loading during login
+  const [error, setError] = useState(""); // State to store error messages
 
   /**
    * useEffect hook to run when the component mounts.
@@ -279,7 +280,7 @@ function App() {
    * The empty dependency array `[]` ensures this effect runs only once when the app loads.
    */
   useEffect(() => {
-    const storedAuth = localStorage.getItem("isAuthenticated");
+    const storedAuth = localStorage.getItem("token"); // Check if a token exists
     if (storedAuth) {
       setIsAuthenticated(true); // Update state if authentication info is found
     }
@@ -290,9 +291,47 @@ function App() {
    * It sets the authentication status to `true` and saves it in localStorage
    * to persist the login state even after page refresh.
    */
-  const handleLogin = () => {
-    setIsAuthenticated(true); // Update the state to reflect that the user is now authenticated
-    localStorage.setItem("isAuthenticated", "true"); // Save authentication state in localStorage
+  const handleLogin = async (email, password, rememberMe) => {
+    setLoading(true); // Set loading state to true while processing
+    setError(""); // Clear any previous errors
+
+    try {
+      // Sending a POST request to the login API endpoint with phone and password
+      const response = await fetch("https://apiv2.blkhedme.com/api/admin/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          phone: email, // Assuming you're using the email input for the phone field
+          password: password,
+        }),
+      });
+
+      const data = await response.json(); // Parse the response data
+
+      if (response.ok) {
+        // If login is successful
+        localStorage.setItem("token", data.token); // Store the authentication token in localStorage
+        setIsAuthenticated(true); // Set the state to reflect user is authenticated
+
+        // If "Remember me" is checked, save the phone to localStorage
+        if (rememberMe) {
+          localStorage.setItem("phone", email); // Assuming email field holds the phone number
+        } else {
+          localStorage.removeItem("phone");
+        }
+
+        // Redirect to the dashboard or any other protected route
+      } else {
+        setError(data.message || "Invalid credentials, please try again.");
+      }
+    } catch (err) {
+      console.error("Error during login:", err);
+      setError("An error occurred. Please try again later.");
+    } finally {
+      setLoading(false); // Turn off the loading spinner when the request is complete
+    }
   };
 
   /**
@@ -302,7 +341,9 @@ function App() {
    */
   const handleLogout = () => {
     setIsAuthenticated(false); // Update the state to reflect that the user is now logged out
-    localStorage.removeItem("isAuthenticated"); // Remove authentication state from localStorage
+    localStorage.removeItem("token"); // Remove authentication state from localStorage
+    
+    
   };
 
   /**
@@ -321,22 +362,24 @@ function App() {
   return (
     <Router>
       {/* Login page route (no authentication required here) */}
-      <Routes>
+      {/* <Routes>
         <Route path="sign-in" element={<LoginPage onLogin={handleLogin} />} />
-      </Routes>
+      </Routes> */}
 
       {/* Protected routes, wrapped inside RequireAuth to prevent access if not authenticated */}
       <Routes>
+      <Route path="sign-in" element={<LoginPage onLogin={handleLogin} />} />
         <Route
           path="/"
           element={
             <RequireAuth>
-              <Layout />
+              <Layout onLogout={handleLogout} /> {/* Add logout functionality */}
             </RequireAuth>
           }
         >
           {/* Nested routes inside the Layout component */}
           <Route index element={<DashboardPage />} /> {/* Default route */}
+          {/* <Route path="dashboard" element={<DashboardPage />} />  */}
           <Route path="providers-page" element={<ProviderPage />} />
           <Route path="list-of-provider" element={<ListOfProvider />} />
           <Route path="certified-provider" element={<CertifiedProvider />} />
