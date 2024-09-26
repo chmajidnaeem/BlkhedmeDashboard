@@ -1,290 +1,295 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FaStar } from 'react-icons/fa';
 import { FiMoreVertical } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
-import notificationImg from '../Assets/notificationImg.png'
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  fetchProviders,
+  deleteProvider,
+  updateProvider,
+} from '../features/providerSlice';
+import notificationImg from '../Assets/notificationImg.png';
 
 const ProviderList = () => {
-  const [dropdownOpen, setDropdownOpen] = useState(null); 
-  const [availability, setAvailability] = useState({});
-  const [status, setStatus] = useState({});
+  const [dropdownOpen, setDropdownOpen] = useState(null);
+  const [editMode, setEditMode] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState(null);
+  const [formData, setFormData] = useState({
+    firstName: '', // separate fields for first name
+    lastName: '', // and last name
+    rating: '',
+    contactNumber: '',
+    category: '',
+    views: 0,
+    reports: 0,
+    calls: 0,
+    isAvailable: false,
+    isActive: false,
+  });
 
-  const toggleDropdown = (index) => {
-    setDropdownOpen(dropdownOpen === index ? null : index);
+  const [filterType, setFilterType] = useState('all'); // State to track filter type
+
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const providersState = useSelector((state) => state.providers);
+  const { providers = [], loading = false, error = null } = providersState || {};
+
+  useEffect(() => {
+    dispatch(fetchProviders());
+  }, [dispatch]);
+
+  const handleEdit = (provider) => {
+    setSelectedProvider(provider);
+    // Populate form fields with the selected provider data
+    setFormData({
+      firstName: provider.firstName || '',
+      lastName: provider.lastName || '',
+      rating: provider.rating || 0,
+      contactNumber: provider.contactNumber || '',
+      category: provider.category || '',
+      views: provider.views || 0,
+      reports: provider.reports || 0,
+      calls: provider.calls || 0,
+      isAvailable: provider.isAvailable || false,
+      isActive: provider.isActive || false,
+    });
+    setEditMode(true);
   };
 
-  
-  const providers = [
-    {
-      id: 1,
-      name: 'John Martin',
-      email: 'providerrequest@gmail.com',
-      phone: '+96213105164',
-      category: 'Electricity',
-      views: 89,
-      reports: 5,
-      calls: 89,
-      rating: 4.5,
-      imageUrl: notificationImg,
-      isAvailable: true,
-      isActive: true,
-    },
-    {
-      id: 2,
-      name: 'Jane Doe',
-      email: 'providerrequest2@gmail.com',
-      phone: '+96213105165',
-      category: 'Plumbing',
-      views: 50,
-      reports: 2,
-      calls: 50,
-      rating: 4.2,
-      imageUrl: notificationImg,
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (editMode) {
+      dispatch(updateProvider({ id: selectedProvider.id, updatedData: formData }));
+    }
+    setEditMode(false);
+    resetForm();
+  };
+
+  const resetForm = () => {
+    setFormData({
+      firstName: '',
+      lastName: '',
+      rating: '',
+      contactNumber: '',
+      category: '',
+      views: 0,
+      reports: 0,
+      calls: 0,
       isAvailable: false,
       isActive: false,
-    },
-    {
-      id: 3,
-      name: 'Alex Johnson',
-      email: 'providerrequest3@gmail.com',
-      phone: '+96213105166',
-      category: 'Cleaning',
-      views: 100,
-      reports: 3,
-      calls: 100,
-      rating: 4.8,
-      imageUrl: notificationImg,
-      isAvailable: true,
-      isActive: true,
-    },
-    {
-      id: 4,
-      name: 'John Martin',
-      email: 'providerrequest@gmail.com',
-      phone: '+96213105164',
-      category: 'Electricity',
-      views: 89,
-      reports: 5,
-      calls: 89,
-      rating: 4.5,
-      imageUrl: notificationImg,
-      isAvailable: true,
-      isActive: true,
-    },
-    {
-      id: 5,
-      name: 'Jane Doe',
-      email: 'providerrequest2@gmail.com',
-      phone: '+96213105165',
-      category: 'Plumbing',
-      views: 50,
-      reports: 2,
-      calls: 50,
-      rating: 4.2,
-      imageUrl: notificationImg,
-      isAvailable: false,
-      isActive: false,
-    },
-    {
-      id: 6,
-      name: 'Alex Johnson',
-      email: 'providerrequest3@gmail.com',
-      phone: '+96213105166',
-      category: 'Cleaning',
-      views: 100,
-      reports: 3,
-      calls: 100,
-      rating: 4.8,
-      imageUrl: notificationImg,
-      isAvailable: true,
-      isActive: true,
-    },
-  ];
-
-  const toggleAvailability = (id) => {
-    setAvailability((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
+    });
   };
 
-  const toggleStatus = (id) => {
-    setStatus((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
+  // Function to filter providers based on the selected filter
+  const getFilteredProviders = () => {
+    if (filterType === 'active') {
+      return providers.filter((provider) => provider.isActive);
+    }
+    if (filterType === 'inactive') {
+      return providers.filter((provider) => !provider.isActive);
+    }
+    return providers; // Default to all providers
   };
-const navigate = useNavigate();
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error}</p>;
+
   return (
-    <div className="space-y-2">
-     
-      {/* <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 w-full"> */}
-      <div className='flex flex-wrap lg:flex-nowrap mt-4 items-center justify-center gap-4 font-poppins'>
-        <div className="bg-[#0085FF] text-white py-4 px-2 rounded-lg shadow-lg w-[180px]">
-          <h3 className="font-bold text-lg">12,524</h3>
-          <p className='text-[12px]'>All Providers</p>
-        </div>
-        <div className="bg-[#007C1B] text-white py-4 px-2 rounded-lg shadow-lg w-[180px]">
-          <h3 className="font-bold text-lg">8,245</h3>
-          <p className='text-[12px]'>Active Providers</p>
-        </div>
-        <div className="bg-[#BC0000] text-white py-4 px-2 rounded-lg shadow-lg w-[180px]">
-          <h3 className="font-bold text-lg">2,356</h3>
-          <p className='text-[12px]'>Inactive Providers</p>
-        </div>
-        <div className="bg-[#FF8407] text-white py-4 px-2 rounded-lg shadow-lg w-[180px]">
-          <h3 className="font-bold text-lg">124</h3>
-          <p className='text-[12px]'>New Provider Requests</p>
-        </div>
-        <div className="bg-[#344A7A] text-white py-4 px-2 rounded-lg shadow-lg w-[180px]">
-          <h3 className="font-bold text-lg">534</h3>
-          <p className='text-[12px]'>Reports</p>
-        </div>
+    <div className="space-y-4 font-poppins">
+      {/* Add New Provider Button */}
+      <div className="flex justify-end pt-4 pr-4 w-full">
+        <button
+          className="bg-[#0085FF] text-white text-sm px-6 py-2 rounded-lg shadow-md hover:bg-[#0072cc] transition duration-200 ease-in-out"
+          onClick={() => navigate('/add-new-provider')}
+        >
+          Add New
+        </button>
       </div>
 
-    
-      <div className="flex justify-end pt-4 pr-4  w-full font-poppins">
-        <button className="bg-[#0085FF] text-white text-sm px-6 py-2 rounded-lg shadow-md"
-        onClick={() => navigate("/add-new-provider")}
-        >Add New</button>
+      {/* Providers Filter */}
+      <div className="flex space-x-6 border-b pb-2">
+        <button
+          className={`font-semibold text-md transition-colors ${filterType === 'all' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-500'}`}
+          onClick={() => setFilterType('all')}
+        >
+          All
+        </button>
+        <button
+          className={`font-semibold text-md transition-colors ${filterType === 'active' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-500'}`}
+          onClick={() => setFilterType('active')}
+        >
+          Active
+        </button>
+        <button
+          className={`font-semibold text-md transition-colors ${filterType === 'inactive' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-500'}`}
+          onClick={() => setFilterType('inactive')}
+        >
+          Inactive
+        </button>
       </div>
 
-
-      <div className="flex space-x-4 border-b font-poppins">
-        <button className="font-semibold text-blue-500 text-md">All</button>
-        <button className="font-regular text-gray-500 text-sm">Active</button>
-        <button className="font-regular text-gray-500 text-sm">Inactive</button>
-      </div>
-
-  
+      {/* Providers Table */}
       <div className="w-full overflow-x-auto px-1">
-  <table className="bg-white shadow-md rounded-lg text-sm table-auto w-full font-inter">
-  <thead>
-  <tr className="text-center bg-[#2b4dc974] text-white text-[10px] md:text-[12px] h-14 ">
-    <th className="relative p-1 lg:p-3">
-      <input type="checkbox" />
-      <span className="absolute top-0 bottom-0 right-0 h-[75%] w-[1px] bg-white m-auto"></span>
-    </th>
-    <th className="relative p-1 lg:p-3">
-      SL
-      <span className="absolute top-0 bottom-0 right-0 h-[75%] w-[1px] bg-white m-auto"></span>
-    </th>
-    <th className="relative p-1 lg:p-3">
-      Provider
-      <span className="absolute top-0 bottom-0 right-0 h-[75%] w-[1px] bg-white m-auto"></span>
-    </th>
-    <th className="relative p-1 lg:p-3">
-      Rating
-      <span className="absolute top-0 bottom-0 right-0 h-[75%] w-[1px] bg-white m-auto"></span>
-    </th>
-    <th className="relative p-1 lg:p-3">
-      Contact
-      <span className="absolute top-0 bottom-0 right-0 h-[75%] w-[1px] bg-white m-auto"></span>
-    </th>
-    <th className="relative p-1 lg:p-3">
-      Category
-      <span className="absolute top-0 bottom-0 right-0 h-[75%] w-[1px] bg-white m-auto"></span>
-    </th>
-    <th className="relative p-1 lg:p-3">
-      Number of Views
-      <span className="absolute top-0 bottom-0 right-0 h-[75%] w-[1px] bg-white m-auto"></span>
-    </th>
-    <th className="relative p-1 lg:p-3">
-      Number of Reports
-      <span className="absolute top-0 bottom-0 right-0 h-[75%] w-[1px] bg-white m-auto"></span>
-    </th>
-    <th className="relative p-1 lg:p-3">
-      Number of Calls
-      <span className="absolute top-0 bottom-0 right-0 h-[75%] w-[1px] bg-white m-auto"></span>
-    </th>
-    <th className="relative p-1 lg:p-3">
-      Service Availability
-      <span className="absolute top-0 bottom-0 right-0 h-[75%] w-[1px] bg-white m-auto"></span>
-    </th>
-    <th className="relative p-1 lg:p-3">
-      Status
-      <span className="absolute top-0 bottom-0 right-0 h-[75%] w-[1px] bg-white m-auto"></span>
-    </th>
-    <th className="p-1 lg:p-3">Actions</th>
-  </tr>
-</thead>
+        <table className="bg-white shadow-md rounded-lg text-sm table-auto w-full">
+          <thead>
+            <tr className="text-center bg-[#2b4dc9] text-white text-xs h-14">
+              <th className="p-3">SL</th>
+              <th className="p-3">Provider</th>
+              <th className="p-3">Rating</th>
+              <th className="p-3">Contact</th>
+              <th className="p-3">Category</th>
+              <th className="p-3">Views</th>
+              <th className="p-3">Reports</th>
+              <th className="p-3">Calls</th>
+              <th className="p-3">Availability</th>
+              <th className="p-3">Status</th>
+              <th className="p-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {getFilteredProviders().map((provider, index) => (
+              <tr key={provider.id} className="border-b text-xs text-center hover:bg-gray-50 transition-colors">
+                <td className="p-2">{index + 1}</td>
+                <td className="p-2">
+                  <div className="flex items-center justify-center">
+                    <img
+                      src={notificationImg}
+                      alt={`${provider.firstName} ${provider.lastName}`}
+                      className="w-8 h-8 rounded-full mr-2"
+                    />
+                    {`${provider.firstName} ${provider.lastName}`}
+                  </div>
+                </td>
+                <td className="p-2">
+                  <div className="flex items-center justify-center">
+                    <FaStar className="text-yellow-500 mr-1" />
+                    {provider.rating}
+                  </div>
+                </td>
+                <td className="p-2">
+                  {provider.email}
+                  <br />
+                  {provider.contactNumber}
+                </td>
+                <td className="p-2">{provider.category}</td>
+                <td className="p-2">{provider.views}</td>
+                <td className="p-2">{provider.reports}</td>
+                <td className="p-2">{provider.calls}</td>
+                <td className="p-2">
+                  <input type="checkbox" checked={provider.isAvailable} readOnly />
+                </td>
+                <td className="p-2">
+                  <input type="checkbox" checked={provider.isActive} readOnly />
+                </td>
+                <td className="p-2 relative">
+                  <button
+                    className="text-gray-500 hover:text-gray-700"
+                    onClick={() => setDropdownOpen(index === dropdownOpen ? null : index)}
+                  >
+                    <FiMoreVertical />
+                  </button>
+                  {dropdownOpen === index && (
+                    <div className="absolute right-0 bg-white shadow-md rounded mt-1">
+                      <button
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                        onClick={() => handleEdit(provider)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                        onClick={() => dispatch(deleteProvider(provider.id))}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-    <tbody>
-      {providers.map((provider, index) => (
-        <tr key={provider.id} className="border-b text-[10px] text-center">
-          <td className="p-2">
-            <input type="checkbox" />
-          </td>
-          <td>{index + 1}</td>
-          <td className="p-2">
-            <div className="flex items-center flex-col lg:flex-row">
-              <img
-                src={provider.imageUrl}
-                alt={provider.name}
-                className="w-6 h-6 rounded-full mr-2"
-              />
-              {provider.name}
-            </div>
-          </td>
-          <td className="p-2">
-            <div className="flex items-center justify-center">
-              <FaStar className="text-yellow-500 mr-1" />
-              {provider.rating}
-            </div>
-          </td>
-          <td className="p-2 text-center">
-            {provider.email}
-            <br />
-            {provider.phone}
-          </td>
-          <td className="p-2">{provider.category}</td>
-          <td className="p-2">{provider.views}</td>
-          <td className="p-2">{provider.reports}</td>
-          <td className="p-2">{provider.calls}</td>
-          <td className="p-2">
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={availability[provider.id] ?? provider.isAvailable}
-                onChange={() => toggleAvailability(provider.id)}
-                className="sr-only peer"
-              />
-              <div className="w-9 h-5 bg-gray-200 hover:bg-gray-300 peer-focus:outline-0 peer-focus:ring-transparent rounded-full peer transition-all ease-in-out duration-500 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:border-gray-300 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
-          </td>
-          <td className="p-2">
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={status[provider.id] ?? provider.isActive}
-                onChange={() => toggleStatus(provider.id)}
-                className="sr-only peer"
-              />
-              <div className="w-9 h-5 bg-gray-200 hover:bg-gray-300 peer-focus:outline-0 peer-focus:ring-transparent rounded-full peer transition-all ease-in-out duration-500 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:border-gray-300 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
-          </td>
-          <td className="relative p-2">
-            <button
-              className="hover:bg-gray-100 cursor-pointer p-1 rounded-full"
-              onClick={() => toggleDropdown(index)}
-            >
-              <FiMoreVertical />
-            </button>
-            {dropdownOpen === index && (
-              <div className="absolute right-0 top-8 bg-white border shadow-md z-10 w-36 text-[10px]">
-                <ul>
-                  <li className="hover:bg-gray-100 cursor-pointer p-2">Edit</li>
-                  <li className="hover:bg-gray-100 cursor-pointer p-2">Delete</li>
-                </ul>
+      {/* Edit Provider Modal */}
+      {editMode && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <form
+            className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md mx-auto"
+            onSubmit={handleSubmit}
+          >
+            <h2 className="text-xl font-bold mb-4">Edit Provider</h2>
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <label className="block mb-2 text-sm font-semibold">First Name</label>
+                <input
+                  type="text"
+                  value={formData.firstName}
+                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded"
+                  required
+                />
               </div>
-            )}
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-</div>
-
+              <div>
+                <label className="block mb-2 text-sm font-semibold">Last Name</label>
+                <input
+                  type="text"
+                  value={formData.lastName}
+                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-semibold">Rating</label>
+                <input
+                  type="number"
+                  value={formData.rating}
+                  onChange={(e) => setFormData({ ...formData, rating: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-semibold">Contact Number</label>
+                <input
+                  type="text"
+                  value={formData.contactNumber}
+                  onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-semibold">Category</label>
+                <input
+                  type="text"
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded"
+                  required
+                />
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end space-x-4">
+              <button
+                type="button"
+                onClick={() => setEditMode(false)}
+                className="bg-gray-200 text-gray-700 px-4 py-2 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="bg-blue-500 text-white px-4 py-2 rounded"
+              >
+                Save
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 };

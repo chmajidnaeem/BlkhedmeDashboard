@@ -1,76 +1,36 @@
 import React, { useState } from "react";
 import { BsThreeDots } from "react-icons/bs";
-import notificationImg from "../Assets/notificationImg.png";
+import { useDispatch } from 'react-redux';
+import { deleteSeeker, updateSeeker } from '../features/seekerSlice'; // Import your actions
 
-const SeekerTable = () => {
-  const seekers = [
-    {
-      id: 1,
-      name: "John Martin",
-      ratings: "4.5",
-      contact: "providerrequest@gmail.com +96213105164",
-      calls: "89",
-      reviews: "89",
-      date: "12 Aug, 2024",
-      image: notificationImg,
-    },
-    {
-      id: 2,
-      name: "John Martin",
-      ratings: "4.5",
-      contact: "providerrequest@gmail.com +96213105164",
-      calls: "89",
-      reviews: "89",
-      date: "12 Aug, 2024",
-      image: notificationImg,
-    },
-    {
-      id: 3,
-      name: "John Martin",
-      ratings: "4.5",
-      contact: "providerrequest@gmail.com +96213105164",
-      calls: "89",
-      reviews: "89",
-      date: "12 Aug, 2024",
-      image: notificationImg,
-    },
-    {
-      id: 4,
-      name: "John Martin",
-      ratings: "4.5",
-      contact: "providerrequest@gmail.com +96213105164",
-      calls: "89",
-      reviews: "89",
-      date: "12 Aug, 2024",
-      image: notificationImg,
-    },
-    {
-      id: 5,
-      name: "John Martin",
-      ratings: "4.5",
-      contact: "providerrequest@gmail.com +96213105164",
-      calls: "89",
-      reviews: "89",
-      date: "12 Aug, 2024",
-      image: notificationImg,
-    },
-    {
-      id: 6,
-      name: "John Martin",
-      ratings: "4.5",
-      contact: "providerrequest@gmail.com +96213105164",
-      calls: "89",
-      reviews: "89",
-      date: "12 Aug, 2024",
-      image: notificationImg,
-    },
-  ];
-
+const SeekerTable = ({ seekers }) => { 
+  const dispatch = useDispatch(); // Get the dispatch function from Redux
   const [activePopup, setActivePopup] = useState(null);
+  const [editingSeeker, setEditingSeeker] = useState(null); // State for the seeker being edited
+  const [updatedData, setUpdatedData] = useState({}); // State for updated data
 
   // Toggle popup visibility
   const togglePopup = (id) => {
     setActivePopup(activePopup === id ? null : id);
+  };
+
+  // Handle the edit button click
+  const handleEdit = (seeker) => {
+    setEditingSeeker(seeker);
+    setUpdatedData({ ...seeker }); // Set the current seeker data for editing
+  };
+
+  // Handle form submission for updating seeker
+  const handleUpdate = (e) => {
+    e.preventDefault(); // Prevent default form submission
+    dispatch(updateSeeker({ id: editingSeeker.id, updatedData })); // Dispatch update action
+    setEditingSeeker(null); // Close edit mode
+  };
+
+  // Handle input change for updating data
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setUpdatedData({ ...updatedData, [name]: value }); // Update the specific field
   };
 
   return (
@@ -84,73 +44,31 @@ const SeekerTable = () => {
                   <input type="checkbox" className="h-4 w-4 rounded" />
                 </span>
               </th>
-              <th className="p-0 ">
-                <span className="block py-2 px-3 border-r border-gray-300">
-                  ID
-                </span>
-              </th>
-              <th className="p-0 ">
-                <span className="block py-2 px-3 border-r border-gray-300">
-                  Seeker
-                </span>
-              </th>
-
-              <th className="p-0 ">
-                <span className="block py-2 px-3 border-r border-gray-300">
-                  Contact
-                </span>
-              </th>
-              <th className="p-0 ">
-                <span className="block py-2 px-3 border-r border-gray-300">
-                  Number of Calls
-                </span>
-              </th>
-
-              <th className="p-0 ">
-                <span className="block py-2 px-3 border-r border-gray-300">
-                  Number of Reviews
-                </span>
-              </th>
-              <th className="p-0 ">
-                <span className="block py-2 px-3 border-r border-gray-300">
-                  Joining Date
-                </span>
-              </th>
-
-              <th className="p-0 ">
-                <span className="block py-2 px-3 border-r border-gray-300">
-                  Status
-                </span>
-              </th>
-              <th className="p-0">
-                <span className="block py-2 px-3">Actions</span>
-              </th>
+              <th className="p-0 "><span className="block py-2 px-3 border-r border-gray-300">ID</span></th>
+              <th className="p-0 "><span className="block py-2 px-3 border-r border-gray-300">Seeker</span></th>
+              <th className="p-0 "><span className="block py-2 px-3 border-r border-gray-300">Contact</span></th>
+              <th className="p-0 "><span className="block py-2 px-3 border-r border-gray-300">Number of Calls</span></th>
+              <th className="p-0 "><span className="block py-2 px-3 border-r border-gray-300">Number of Reviews</span></th>
+              <th className="p-0 "><span className="block py-2 px-3 border-r border-gray-300">Joining Date</span></th>
+              <th className="p-0 "><span className="block py-2 px-3 border-r border-gray-300">Status</span></th>
+              <th className="p-0"><span className="block py-2 px-3">Actions</span></th>
             </tr>
           </thead>
           <tbody>
             {seekers.map((seeker, index) => (
-              <tr
-                key={seeker.id}
-                className="border-b text-xs text-center px-2 text-gray-800"
-              >
-                <td className="p-4">
-                  <input type="checkbox" className="h-4 w-4 rounded" />
-                </td>
+              <tr key={seeker.id} className="border-b text-xs text-center px-2 text-gray-800">
+                <td className="p-4"><input type="checkbox" className="h-4 w-4 rounded" /></td>
                 <td className="p-4">{`0${index + 1}`}</td>
                 <td className="p-4">
-                  <div className="flex items-center ">
-                    <img
-                      src={seeker.image}
-                      alt="Provider"
-                      className="w-8 h-8 rounded-full"
-                    />
+                  <div className="flex items-center">
+                    <img src={seeker.image} alt="Provider" className="w-8 h-8 rounded-full" />
                     <span>{seeker.name}</span>
                   </div>
                 </td>
                 <td className="p-4">{seeker.contact}</td>
                 <td className="p-4">{seeker.calls}</td>
                 <td className="p-4">{seeker.reviews}</td>
-                <td className="p-4">{seeker.date}</td>
+                <td className="p-4">{new Date(seeker.date).toLocaleDateString()}</td> {/* Format date */}
                 <td className="p-4">
                   <label className="relative inline-block">
                     <input type="checkbox" className="peer invisible" />
@@ -165,12 +83,8 @@ const SeekerTable = () => {
                   />
                   {activePopup === seeker.id && (
                     <div className="absolute right-0 top-8 bg-white flex-col justify-center items-center mr-0 sm:mr-10 inline-block py-2 px-4 rounded-lg text-[#0000009C] shadow-lg border-2 z-50">
-                      <h1 className="cursor-pointer text-xs md:text-sm">
-                        Edit
-                      </h1>
-                      <h1 className="cursor-pointer mt-1 text-xs md:text-sm">
-                        Delete
-                      </h1>
+                      <h1 className="cursor-pointer text-xs md:text-sm" onClick={() => handleEdit(seeker)}>Edit</h1>
+                      <h1 className="cursor-pointer mt-1 text-xs md:text-sm" onClick={() => dispatch(deleteSeeker(seeker.id))}>Delete</h1>
                     </div>
                   )}
                 </td>
@@ -179,6 +93,44 @@ const SeekerTable = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Edit Form Modal */}
+      {editingSeeker && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
+            <h2 className="text-lg font-semibold mb-4">Edit Seeker</h2>
+            <form onSubmit={handleUpdate}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="name">Name:</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={updatedData.name}
+                  onChange={handleInputChange}
+                  required
+                  className="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-200"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="contact">Contact:</label>
+                <input
+                  type="text"
+                  name="contact"
+                  value={updatedData.contact}
+                  onChange={handleInputChange}
+                  required
+                  className="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-200"
+                />
+              </div>
+              {/* Add more fields as necessary */}
+              <div className="flex justify-end mt-4">
+                <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">Update</button>
+                <button type="button" className="ml-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition" onClick={() => setEditingSeeker(null)}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

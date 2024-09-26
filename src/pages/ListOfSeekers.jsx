@@ -1,9 +1,37 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import SeekerTable from "../components/SeekerTable";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchSeekers } from "../features/seekerSlice";
 
 const ListOfSeekers = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  // Access the seekers state
+  const seekersState = useSelector((state) => state.seekers);
+  const { seekers = [], loading = false, error = null } = seekersState || {};
+
+  // State for the active filter ('all', 'active', 'inactive')
+  const [filter, setFilter] = useState("all");
+
+  // Fetch seekers when the component loads
+  useEffect(() => {
+    dispatch(fetchSeekers());
+  }, [dispatch]);
+
+  // Apply filter logic based on 'status'
+  const filteredSeekers = seekers.filter((seeker) => {
+    if (filter === "all") return true;
+    if (filter === "active") return seeker.status === "active"; // Assuming 'status' field in seeker
+    if (filter === "inactive") return seeker.status === "inactive";
+    return false;
+  });
+
+  // Handling loading and error states
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error}</p>;
+
   return (
     <div className="min-h-screen bg-gray-100 overflow-x-auto">
       <div className="m-8">
@@ -24,26 +52,48 @@ const ListOfSeekers = () => {
             <p className="text-sm">Inactive Seeker</p>
           </div>
         </div>
+
         <div className="flex justify-end mt-6 mb-2">
-          <button className="flex items-center bg-[#0085FF] text-white px-8 py-2 rounded-md"
-          onClick={() => navigate("/add-new-seeker")}>
+          <button
+            className="flex items-center bg-[#0085FF] text-white px-8 py-2 rounded-md"
+            onClick={() => navigate("/add-new-seeker")}
+          >
             <span>Add New</span>
           </button>
         </div>
-        <div className="flex flex-row space-x-8 sm:gap-4  font-poppins font-medium text-lg border-b-2">
-          <h1 className="border-b-2 border-black w-full text-center sm:text-sm text-base sm:w-auto sm:text-left">
+
+        {/* Filter buttons */}
+        <div className="flex flex-row space-x-8 sm:gap-4 font-poppins font-medium text-lg border-b-2">
+          <h1
+            className={`w-full text-center sm:text-sm text-base sm:w-auto sm:text-left cursor-pointer ${
+              filter === "all" ? "border-b-2 border-black" : "text-[#707070]"
+            }`}
+            onClick={() => setFilter("all")}
+          >
             All
           </h1>
-          <h1 className="text-[#707070] w-full text-center sm:text-sm text-base sm:w-auto sm:text-left">
+          <h1
+            className={`w-full text-center sm:text-sm text-base sm:w-auto sm:text-left cursor-pointer ${
+              filter === "active" ? "border-b-2 border-black" : "text-[#707070]"
+            }`}
+            onClick={() => setFilter("active")}
+          >
             Active
           </h1>
-          <h1 className="text-[#707070] w-full text-center sm:text-sm text-base sm:w-auto sm:text-left">
+          <h1
+            className={`w-full text-center sm:text-sm text-base sm:w-auto sm:text-left cursor-pointer ${
+              filter === "inactive"
+                ? "border-b-2 border-black"
+                : "text-[#707070]"
+            }`}
+            onClick={() => setFilter("inactive")}
+          >
             Inactive
           </h1>
         </div>
 
-        {/* Table starts here */}
-        <SeekerTable />
+        {/* Seeker Table with filtered seekers */}
+        <SeekerTable seekers={filteredSeekers} />
       </div>
     </div>
   );
