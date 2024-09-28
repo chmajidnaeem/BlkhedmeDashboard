@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react"; // Import React hooks for managing state and side effects
 import "./App.css"; // Importing custom CSS file for styling
 import {
@@ -15,9 +14,6 @@ import RequireAuth from "./RequireAuth";
 
 import { useDispatch } from "react-redux";
 import { login, logout } from "./store"; // Import Redux actions
-
-
-
 
 // Optional for token expiration handling
 
@@ -48,6 +44,7 @@ import ListOfSubscribers from "./pages/ListOfSubscribers";
 import NewSubscriptionPlan from "./pages/NewSubscriptionPlan";
 import OnboardingProviderProfile from "./pages/OnboardingProviderProfile";
 import OnboardingProviderReviews from "./pages/OnboardingProviderReviews";
+import Locations from "./pages/Locations";
 
 function App() {
   /**
@@ -60,23 +57,22 @@ function App() {
 
   const dispatch = useDispatch();
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    
+    const token = localStorage.getItem("authToken");
+
     if (token) {
       const decodedToken = jwtDecode(token);
       const currentTime = Date.now() / 1000;
-  
+
       if (decodedToken.exp > currentTime) {
         // Token is valid
         dispatch(login(token));
       } else {
         // Token is expired, logout
-        localStorage.removeItem('authToken');
+        localStorage.removeItem("authToken");
         dispatch(logout());
       }
     }
   }, [dispatch]);
-  
 
   /**
    * useEffect hook to run when the component mounts.
@@ -132,9 +128,7 @@ function App() {
           >
             <Route index element={<DashboardPage />} />
             <Route path="providers-page" element={<ProviderPage />} />
-            
             <Route path="list-of-provider" element={<ListOfProvider />} />
-            
             <Route path="certified-provider" element={<CertifiedProvider />} />
             <Route path="featured-provider" element={<FeaturedProvider />} />
             <Route path="add-new-provider" element={<AddNewProvider />} />
@@ -177,7 +171,7 @@ function App() {
               element={<OnboardingProviderProfile />}
             />
             <Route path="notifications" element={<Notifications />} />
-            <Route path="notifications" element={<Notifications />} />
+            <Route path="locations" element={<Locations />} />
           </Route>
         </Routes>
       </Router>

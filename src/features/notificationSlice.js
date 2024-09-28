@@ -1,4 +1,3 @@
-// src/redux/notificationSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
@@ -19,7 +18,7 @@ export const pushNotification = createAsyncThunk(
       formData.append('city', notificationData.city);
       formData.append('image', notificationData.image);
 
-      // Assuming you have an array of user_ids
+      // Assuming you have an array of user_ids to send notification to.
       notificationData.userIds.forEach((id, index) => {
         formData.append(`user_id[${index}]`, id);
       });
@@ -38,7 +37,7 @@ export const pushNotification = createAsyncThunk(
   }
 );
 
-// Async action to fetch all users
+// Async action to fetch(Read) all users
 export const fetchAllUsers = createAsyncThunk(
   'notifications/fetchAllUsers',
   async (_, { rejectWithValue }) => {

@@ -35,6 +35,7 @@ import categoryReducer from './features/categorySlice';
 // store.js (or your Redux slice)
 import subCategoryReducer from "./features/subCategorySlice"
 import notificationReducer from './features/notificationSlice';
+import locationReducer from "./features/locationSlice"
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
@@ -64,6 +65,7 @@ const store = configureStore({
     categories: categoryReducer,
     subCategories: subCategoryReducer,
     notifications: notificationReducer,
+    locations: locationReducer,
   },
 });
 export default store;

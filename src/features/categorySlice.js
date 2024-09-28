@@ -57,7 +57,7 @@ export const toggleCategoryStatus = createAsyncThunk('categories/toggleCategoryS
       },
     });
     console.log("Status Update API Response:", response.data);
-    return response.data.category; // Assuming your API returns the updated category object
+    return response.data.category; // aAPI returns the updated category objectss
   } catch (error) {
     console.error('Error updating category status:', error);
     throw error;
