@@ -132,7 +132,9 @@ function App() {
           >
             <Route index element={<DashboardPage />} />
             <Route path="providers-page" element={<ProviderPage />} />
+            
             <Route path="list-of-provider" element={<ListOfProvider />} />
+            
             <Route path="certified-provider" element={<CertifiedProvider />} />
             <Route path="featured-provider" element={<FeaturedProvider />} />
             <Route path="add-new-provider" element={<AddNewProvider />} />
@@ -174,6 +176,7 @@ function App() {
               path="onboarding-provider-profile"
               element={<OnboardingProviderProfile />}
             />
+            <Route path="notifications" element={<Notifications />} />
             <Route path="notifications" element={<Notifications />} />
           </Route>
         </Routes>

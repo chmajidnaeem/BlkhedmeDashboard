@@ -9,7 +9,7 @@ const SubCategorySetup = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const fileInputRef = useRef(null);
   const [showUploadArea, setShowUploadArea] = useState(true);
-  const [locations, setLocations] = useState([]);
+  const [locations, setLocations] = useState([]); // This will hold the locations
   const [categoryName, setCategoryName] = useState('');
   const [description, setDescription] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
@@ -35,7 +35,7 @@ const SubCategorySetup = () => {
   const fetchData = async () => {
     try {
       const { data } = await axios.get('https://apiv2.blkhedme.com/api/locations/show');
-      setLocations(data.location);
+      setLocations(data.location); // Ensure data.location holds the correct structure
     } catch (error) {
       console.error('There was an error fetching the data!', error);
     }
@@ -50,38 +50,39 @@ const SubCategorySetup = () => {
     setIsSubmitting(true);
     setSubmissionMessage('');
 
-    const formData = new FormData();
-    formData.append('categoryName', categoryName);
-    formData.append('city', selectedCity);
-    formData.append('description', description);
-    if (selectedFile) {
-      formData.append('image', selectedFile);
-    }
+    const locationId = locations.find(location => location.title === selectedCity)?.id;
+    console.log("locationID: ", locationId);
+
+    // Define parent_id if applicable, or set to null
+    const parentId = undefined; // Change this as per your logic if you need to get a parent ID
+
+    const newSubCategory = {
+        name: categoryName,
+        location_id: locationId || null,
+        description,
+        image: null, // Set to null if you don't want to submit the image
+        parent_id: parentId || -1 // Set to null if not defined
+    };
+
+    console.log("Submitting subcategory:", newSubCategory);
 
     try {
-      // Dispatching the addSubCategory action with the form data
-      const newSubCategory = {
-        categoryName,
-        city: selectedCity,
-        description,
-        image: selectedFile // Ensure your API can handle this or convert it accordingly
-      };
-      await dispatch(addSubCategory(newSubCategory));
-      setSubmissionMessage('Data submitted successfully!');
-      
-      // Resetting the form fields after successful submission
-      setCategoryName('');
-      setDescription('');
-      setSelectedCity('');
-      setSelectedFile(null);
-      setShowUploadArea(true); // Reset the upload area visibility
+        await dispatch(addSubCategory(newSubCategory));
+        setSubmissionMessage('Data submitted successfully!');
+        
+        // Resetting form fields
+        setCategoryName('');
+        setDescription('');
+        setSelectedCity('');
+        setSelectedFile(null);
+        setShowUploadArea(true);
     } catch (error) {
-      console.error('There was an error submitting the form!', error);
-      setSubmissionMessage('Error submitting the form. Please try again.');
+        console.error('There was an error submitting the form!', error);
+        setSubmissionMessage('Error submitting the form. Please try again.');
     } finally {
-      setIsSubmitting(false); // Reset submitting state
+        setIsSubmitting(false);
     }
-  };
+};
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">

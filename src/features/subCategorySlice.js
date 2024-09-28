@@ -1,72 +1,100 @@
-// src/features/subCategorySlice.js
-
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import axios from 'axios';
 
-// Async thunk for fetching subcategories from the API
+const API_URL = "https://apiv2.blkhedme.com/api/admin/subcategories";
+
+// Fetching all subcategories
 export const fetchSubCategories = createAsyncThunk(
   'subCategories/fetchSubCategories',
   async () => {
-    const response = await fetch("https://66f592fb436827ced9746e96.mockapi.io/sub-category-setup");
-    if (!response.ok) {
-      throw new Error('Failed to fetch subcategories');
+    const token = localStorage.getItem('authToken');
+    try {
+      const response = await axios.get(`${API_URL}/all`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log("Fetched sub Categories: ", response.data.data)
+      return response.data.data; 
+    } catch (error) {
+      console.error('Error fetching subcategories:', error);
+      throw error; 
     }
-    const data = await response.json();
-    return data;
   }
 );
 
-// Async thunk for deleting a subcategory
+// Adding a new subcategory
+export const addSubCategory = createAsyncThunk(
+  'subCategories/addSubCategory',
+  async (data, { rejectWithValue }) => {
+    const token = localStorage.getItem('authToken');
+    const formData = new FormData();
+    formData.append('location_id', data.location_id);
+    formData.append('name', data.name);
+    formData.append('image', data.image);
+    formData.append('description', data.description);
+    formData.append('parent_id', data.parent_id);
+
+    try {
+      const response = await axios.post(API_URL, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data.data; 
+    } catch (error) {
+      console.error('Error adding subcategory:', error.response ? error.response.data : error.message);
+      return rejectWithValue(error.response ? error.response.data : 'Unknown error');
+    }
+  }
+);
+
+// Updating an existing subcategory
+export const editSubCategory = createAsyncThunk(
+  'subCategories/editSubCategory',
+  async ({ id, data }, { rejectWithValue }) => {
+    const token = localStorage.getItem('authToken');
+    const formData = new FormData();
+    formData.append('location_id', data.location_id);
+    formData.append('name', data.name);
+    formData.append('image', data.image);
+    formData.append('description', data.description);
+    formData.append('parent_id', data.parent_id);
+
+    try {
+      const response = await axios.post(`${API_URL}/update/${id}`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data.data; 
+    } catch (error) {
+      console.error('Error editing subcategory:', error.response ? error.response.data : error.message);
+      return rejectWithValue(error.response ? error.response.data : 'Unknown error');
+    }
+  }
+);
+
+// Deleting a subcategory
 export const deleteSubCategory = createAsyncThunk(
   'subCategories/deleteSubCategory',
   async (id) => {
-    const response = await fetch(`https://66f592fb436827ced9746e96.mockapi.io/sub-category-setup/${id}`, {
-      method: 'DELETE',
-    });
-    if (!response.ok) {
-      throw new Error('Failed to delete subcategory');
+    const token = localStorage.getItem('authToken');
+    try {
+      await axios.delete(`${API_URL}/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return id; 
+    } catch (error) {
+      console.error('Error deleting subcategory:', error);
+      throw error; 
     }
-    return id; // Return the ID of the deleted subcategory
   }
 );
-
-// Async thunk for editing a subcategory
-export const editSubCategory = createAsyncThunk(
-  'subCategories/editSubCategory',
-  async ({ id, data }) => {
-    const response = await fetch(`https://66f592fb436827ced9746e96.mockapi.io/sub-category-setup/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      throw new Error('Failed to edit subcategory');
-    }
-    const updatedData = await response.json();
-    return updatedData; // Return the updated subcategory data
-  }
-);
-
-// Async thunk for adding a new subcategory
-export const addSubCategory = createAsyncThunk(
-  'subCategories/addSubCategory',
-  async (data) => {
-    const response = await fetch("https://66f592fb436827ced9746e96.mockapi.io/sub-category-setup", {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      throw new Error('Failed to add subcategory');
-    }
-    const newData = await response.json();
-    return newData; // Return the newly created subcategory
-  }
-);
-
 // Create a slice
 const subCategorySlice = createSlice({
   name: 'subCategories',
@@ -76,10 +104,10 @@ const subCategorySlice = createSlice({
     error: null,
   },
   reducers: {
-    toggleFeatured: (state, action) => {
-      const categoryIndex = state.subCategories.findIndex(cat => cat.id === action.payload);
-      if (categoryIndex !== -1) {
-        state.subCategories[categoryIndex].isFeatured = !state.subCategories[categoryIndex].isFeatured;
+    toggleFeatured(state, action) {
+      const subCategory = state.subCategories.find(cat => cat.id === action.payload.id);
+      if (subCategory) {
+        subCategory.isFeatured = !subCategory.isFeatured; // Toggle the featured status
       }
     },
   },
@@ -97,18 +125,15 @@ const subCategorySlice = createSlice({
         state.error = action.error.message;
       })
       .addCase(deleteSubCategory.fulfilled, (state, action) => {
-        // Remove the deleted subcategory from the state
         state.subCategories = state.subCategories.filter(cat => cat.id !== action.payload);
       })
       .addCase(editSubCategory.fulfilled, (state, action) => {
-        // Update the edited subcategory in the state
         const index = state.subCategories.findIndex(cat => cat.id === action.payload.id);
         if (index !== -1) {
           state.subCategories[index] = action.payload;
         }
       })
       .addCase(addSubCategory.fulfilled, (state, action) => {
-        // Add the newly created subcategory to the state
         state.subCategories.push(action.payload);
       });
   },

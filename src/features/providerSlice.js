@@ -1,66 +1,112 @@
+// src/features/providerSlice.js
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
 // API endpoint
-const API_URL = 'https://66f5205e9aa4891f2a23f35d.mockapi.io/list-of-provider';
+const API_URL = 'https://apiv2.blkhedme.com/api/admin/provider';
 
-// Thunks for async actions
-export const fetchProviders = createAsyncThunk('providers/fetchProviders', async () => {
+// Fetching all providers
+export const fetchProviders = createAsyncThunk('provider/fetchProviders', async () => {
+  const token = localStorage.getItem('authToken');
   try {
-    const response = await axios.get(API_URL);
-    console.log('Fetched Providers:', response.data); 
-    return response.data;
+    const response = await axios.get(API_URL, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    console.log("Fetched Providers: ", response.data.data);
+    return response.data.data; // Ensure this returns the array of providers
   } catch (error) {
-    console.error('Error fetching providers:', error); 
-    throw error; // Rethrow the error to trigger the rejected case
+    console.error('Error fetching providers:', error);
+    throw error;
   }
 });
 
-// Add a new provider
-export const addProvider = createAsyncThunk('providers/addProvider', async (newProvider) => {
-  try {
-    const response = await axios.post("https://66f5205e9aa4891f2a23f35d.mockapi.io/list-of-provider", newProvider);
-    return response.data; // Return the response data (newly added provider)
-  } catch (error) {
-    console.error('Error adding provider:', error);
-    throw error; // This will trigger the rejected case
-  }
-});
+// Adding new provider
+export const addProvider = createAsyncThunk(
+  'providers/addProvider',
+  async (newProvider, { rejectWithValue }) => {
+    const token = localStorage.getItem('authToken');
 
-// Update an existing provider
+    if (!token) {
+      console.error('Token not found. Please login.');
+      return rejectWithValue('Authentication token missing');
+    }
+
+    try {
+      const response = await axios.put(`${API_URL}/store`, newProvider, { // Updated endpoint
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'appliation/json', // Important for file uploads
+        },
+      });
+
+      console.log("Add Provider Response: ", response.data);
+      return response.data.data; // Assuming response.data.data is the new provider object
+    } catch (error) {
+      console.error('Error adding provider:', error.response ? error.response.data : error.message);
+      return rejectWithValue(error.response ? error.response.data : 'Unknown error');
+    }
+  }
+);
+
+// Updating an existing provider
 export const updateProvider = createAsyncThunk('providers/updateProvider', async ({ id, updatedData }) => {
+  console.log("ID : ", id);
+  console.log("updatedData : ", updatedData);
+  const token = localStorage.getItem('authToken');
   try {
-    const response = await axios.put(`${API_URL}/${id}`, updatedData);
-    return response.data;
+    const response = await axios.post(`${API_URL}/Update/${id}`, updatedData, { // Ensure this endpoint is correct
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json', // Important for file uploads
+      },
+    });
+    console.log("Updating Provider Response: ", response.data);
+    return response.data.data; // Assuming response.data.data is the updated provider object
   } catch (error) {
-    console.error('Error updating provider:', error);
-    throw error; // This will trigger the rejected case
+    if (error.response) {
+      console.error('Error updating provider (response):', error.response);
+      console.error('Status:', error.response.status);
+      console.error('Headers:', error.response.headers);
+      console.error('Data:', error.response.data);
+    } else if (error.request) {
+      console.error('Error updating provider (request):', error.request);
+    } else {
+      console.error('Error updating provider (message):', error.message);
+    }
+    throw error; // Re-throw the error so it can be caught in the thunk
   }
 });
 
-// Delete a provider
+// Deleting a provider
 export const deleteProvider = createAsyncThunk('providers/deleteProvider', async (id) => {
+  const token = localStorage.getItem('authToken');
   try {
-    await axios.delete(`${API_URL}/${id}`);
-    return id; // Return the id of the deleted provider
+    await axios.delete(`${API_URL}/${id}`, { // Ensure this endpoint is correct
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return id;
   } catch (error) {
     console.error('Error deleting provider:', error);
-    throw error; // This will trigger the rejected case
+    throw error;
   }
 });
 
 const providerSlice = createSlice({
   name: 'providers',
   initialState: {
-    providers: [],
+    providers: [], // Array of provider objects
     loading: false,
     error: null,
   },
   reducers: {},
   extraReducers: (builder) => {
     builder
-      // Fetch providers
+      // Fetching providers
       .addCase(fetchProviders.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -71,38 +117,54 @@ const providerSlice = createSlice({
       })
       .addCase(fetchProviders.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message; 
-        console.error('Fetch Providers Error:', state.error); 
+        state.error = action.error.message;
       })
 
-      // Add provider
+      // Adding provider
+      .addCase(addProvider.pending, (state) => { // Optional: handle pending state
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(addProvider.fulfilled, (state, action) => {
+        state.loading = false;
         state.providers.push(action.payload);
       })
       .addCase(addProvider.rejected, (state, action) => {
-        state.error = action.error.message; 
-        console.error('Add Provider Error:', state.error);
+        state.loading = false;
+        state.error = action.payload || action.error.message;
       })
 
-      // Update provider
+      // Updating provider
+      .addCase(updateProvider.pending, (state) => { // Optional: handle pending state
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(updateProvider.fulfilled, (state, action) => {
-        const index = state.providers.findIndex((provider) => provider.id === action.payload.id);
+        state.loading = false;
+        const updatedProvider = action.payload;
+        const index = state.providers.findIndex((provider) => provider.id === updatedProvider.id);
         if (index !== -1) {
-          state.providers[index] = action.payload;
+          state.providers[index] = updatedProvider;
         }
       })
       .addCase(updateProvider.rejected, (state, action) => {
-        state.error = action.error.message; 
-        console.error('Update Provider Error:', state.error); 
+        state.loading = false;
+        state.error = action.error.message;
       })
 
-      // Delete provider
+      // Deleting provider
+      .addCase(deleteProvider.pending, (state) => { // Optional: handle pending state
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(deleteProvider.fulfilled, (state, action) => {
-        state.providers = state.providers.filter((provider) => provider.id !== action.payload);
+        state.loading = false;
+        const id = action.payload;
+        state.providers = state.providers.filter((provider) => provider.id !== id);
       })
       .addCase(deleteProvider.rejected, (state, action) => {
-        state.error = action.error.message; 
-        console.error('Delete Provider Error:', state.error); 
+        state.loading = false;
+        state.error = action.error.message;
       });
   },
 });

@@ -3,7 +3,7 @@ import { BsThreeDots } from "react-icons/bs";
 import { useDispatch } from 'react-redux';
 import { deleteSeeker, updateSeeker } from '../features/seekerSlice'; // Import your actions
 
-const SeekerTable = ({ seekers }) => { 
+const SeekerTable = ({ seekers }) => {
   const dispatch = useDispatch(); // Get the dispatch function from Redux
   const [activePopup, setActivePopup] = useState(null);
   const [editingSeeker, setEditingSeeker] = useState(null); // State for the seeker being edited
@@ -61,13 +61,13 @@ const SeekerTable = ({ seekers }) => {
                 <td className="p-4">{`0${index + 1}`}</td>
                 <td className="p-4">
                   <div className="flex items-center">
-                    <img src={seeker.image} alt="Provider" className="w-8 h-8 rounded-full" />
-                    <span>{seeker.name}</span>
+                    <img src={seeker.image} alt="Provider" className="w-8 h-8 rounded-full" />&nbsp;&nbsp;
+                    <span>{`${seeker.first_name} ${seeker.last_name}`}</span>
                   </div>
                 </td>
-                <td className="p-4">{seeker.contact}</td>
-                <td className="p-4">{seeker.calls}</td>
-                <td className="p-4">{seeker.reviews}</td>
+                <td className="p-4">{seeker.phone || "N/A"} {seeker.email || "N/A"}</td>
+                <td className="p-4">{seeker.user_call_logs_count || 0}</td>
+                <td className="p-4">{seeker.provider_reviews || "N/A"}</td>
                 <td className="p-4">{new Date(seeker.date).toLocaleDateString()}</td> {/* Format date */}
                 <td className="p-4">
                   <label className="relative inline-block">

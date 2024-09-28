@@ -15,19 +15,17 @@ const ProviderList = () => {
   const [editMode, setEditMode] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState(null);
   const [formData, setFormData] = useState({
-    firstName: '', // separate fields for first name
-    lastName: '', // and last name
+    first_name: '',
+    last_name: '',
     rating: '',
-    contactNumber: '',
-    category: '',
-    views: 0,
-    reports: 0,
-    calls: 0,
+    phone: '', // Updated to match the field in the API
+    profession: '', // Updated to match the field in the API
+    views_count: 0, // Updated to match the field in the API
     isAvailable: false,
     isActive: false,
   });
 
-  const [filterType, setFilterType] = useState('all'); // State to track filter type
+  const [filterType, setFilterType] = useState('all');
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -41,18 +39,15 @@ const ProviderList = () => {
 
   const handleEdit = (provider) => {
     setSelectedProvider(provider);
-    // Populate form fields with the selected provider data
     setFormData({
-      firstName: provider.firstName || '',
-      lastName: provider.lastName || '',
+      first_name: provider.first_name || '',
+      last_name: provider.last_name || '',
       rating: provider.rating || 0,
-      contactNumber: provider.contactNumber || '',
-      category: provider.category || '',
-      views: provider.views || 0,
-      reports: provider.reports || 0,
-      calls: provider.calls || 0,
-      isAvailable: provider.isAvailable || false,
-      isActive: provider.isActive || false,
+      phone: provider.phone || '', // Use phone field
+      profession: provider.profession || '', // Use profession field
+      views_count: provider.views_count || 0,
+      isAvailable: provider.availability || false,
+      isActive: provider.status === 'active', // Use status field for active/inactive state
     });
     setEditMode(true);
   };
@@ -68,28 +63,25 @@ const ProviderList = () => {
 
   const resetForm = () => {
     setFormData({
-      firstName: '',
-      lastName: '',
+      first_name: '',
+      last_name: '',
       rating: '',
-      contactNumber: '',
-      category: '',
-      views: 0,
-      reports: 0,
-      calls: 0,
+      phone: '',
+      profession: '',
+      views_count: 0,
       isAvailable: false,
       isActive: false,
     });
   };
 
-  // Function to filter providers based on the selected filter
   const getFilteredProviders = () => {
     if (filterType === 'active') {
-      return providers.filter((provider) => provider.isActive);
+      return providers.filter((provider) => provider.status === 'active');
     }
     if (filterType === 'inactive') {
-      return providers.filter((provider) => !provider.isActive);
+      return providers.filter((provider) => provider.status !== 'active');
     }
-    return providers; // Default to all providers
+    return providers;
   };
 
   if (loading) return <p>Loading...</p>;
@@ -97,7 +89,6 @@ const ProviderList = () => {
 
   return (
     <div className="space-y-4 font-poppins">
-      {/* Add New Provider Button */}
       <div className="flex justify-end pt-4 pr-4 w-full">
         <button
           className="bg-[#0085FF] text-white text-sm px-6 py-2 rounded-lg shadow-md hover:bg-[#0072cc] transition duration-200 ease-in-out"
@@ -107,7 +98,6 @@ const ProviderList = () => {
         </button>
       </div>
 
-      {/* Providers Filter */}
       <div className="flex space-x-6 border-b pb-2">
         <button
           className={`font-semibold text-md transition-colors ${filterType === 'all' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-500'}`}
@@ -129,7 +119,6 @@ const ProviderList = () => {
         </button>
       </div>
 
-      {/* Providers Table */}
       <div className="w-full overflow-x-auto px-1">
         <table className="bg-white shadow-md rounded-lg text-sm table-auto w-full">
           <thead>
@@ -138,7 +127,7 @@ const ProviderList = () => {
               <th className="p-3">Provider</th>
               <th className="p-3">Rating</th>
               <th className="p-3">Contact</th>
-              <th className="p-3">Category</th>
+              <th className="p-3">Category</th> 
               <th className="p-3">Views</th>
               <th className="p-3">Reports</th>
               <th className="p-3">Calls</th>
@@ -155,32 +144,33 @@ const ProviderList = () => {
                   <div className="flex items-center justify-center">
                     <img
                       src={notificationImg}
-                      alt={`${provider.firstName} ${provider.lastName}`}
+                      alt={`${provider.first_name} ${provider.last_name}`} // Fixed template literal
                       className="w-8 h-8 rounded-full mr-2"
                     />
-                    {`${provider.firstName} ${provider.lastName}`}
+                    {`${provider.first_name} ${provider.last_name}`} {/* Fixed template literal */}
                   </div>
                 </td>
                 <td className="p-2">
                   <div className="flex items-center justify-center">
                     <FaStar className="text-yellow-500 mr-1" />
-                    {provider.rating}
+                    {provider.rating || 0}
                   </div>
                 </td>
                 <td className="p-2">
-                  {provider.email}
+                  {provider.email || 'N/A'}
                   <br />
-                  {provider.contactNumber}
+                  {provider.phone || 'N/A'}
                 </td>
-                <td className="p-2">{provider.category}</td>
-                <td className="p-2">{provider.views}</td>
-                <td className="p-2">{provider.reports}</td>
-                <td className="p-2">{provider.calls}</td>
+                <td className="p-2">{provider.profession || 'N/A'}</td> {/* Profession field */}
+                <td className="p-2">{provider.views_count || 0}</td>
+                <td className="p-2">{provider.provider_reviews_count || "N/A"}</td> {/* Reports field change id didn't found reports feild coming from api so i paste the reviews field here */}
+                <td className="p-2">{provider.call_logs_count
+                  || "N/A"}</td>
                 <td className="p-2">
-                  <input type="checkbox" checked={provider.isAvailable} readOnly />
+                  <input type="checkbox" checked={provider.availability || false} readOnly />
                 </td>
                 <td className="p-2">
-                  <input type="checkbox" checked={provider.isActive} readOnly />
+                  <input type="checkbox" checked={provider.status === 'active'} readOnly />
                 </td>
                 <td className="p-2 relative">
                   <button
@@ -225,9 +215,9 @@ const ProviderList = () => {
                 <label className="block mb-2 text-sm font-semibold">First Name</label>
                 <input
                   type="text"
-                  value={formData.firstName}
-                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                  className="w-full p-2 border border-gray-300 rounded"
+                  value={formData.first_name}
+                  onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                  className="border p-2 w-full rounded"
                   required
                 />
               </div>
@@ -235,56 +225,62 @@ const ProviderList = () => {
                 <label className="block mb-2 text-sm font-semibold">Last Name</label>
                 <input
                   type="text"
-                  value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                  className="w-full p-2 border border-gray-300 rounded"
+                  value={formData.last_name}
+                  onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                  className="border p-2 w-full rounded"
                   required
                 />
               </div>
               <div>
-                <label className="block mb-2 text-sm font-semibold">Rating</label>
-                <input
-                  type="number"
-                  value={formData.rating}
-                  onChange={(e) => setFormData({ ...formData, rating: e.target.value })}
-                  className="w-full p-2 border border-gray-300 rounded"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block mb-2 text-sm font-semibold">Contact Number</label>
+                <label className="block mb-2 text-sm font-semibold">Phone</label>
                 <input
                   type="text"
-                  value={formData.contactNumber}
-                  onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
-                  className="w-full p-2 border border-gray-300 rounded"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="border p-2 w-full rounded"
                   required
                 />
               </div>
               <div>
-                <label className="block mb-2 text-sm font-semibold">Category</label>
+                <label className="block mb-2 text-sm font-semibold">Profession</label>
                 <input
                   type="text"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full p-2 border border-gray-300 rounded"
+                  value={formData.profession}
+                  onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
+                  className="border p-2 w-full rounded"
                   required
+                />
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-semibold">Availability</label>
+                <input
+                  type="checkbox"
+                  checked={formData.isAvailable}
+                  onChange={(e) => setFormData({ ...formData, isAvailable: e.target.checked })}
+                />
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-semibold">Status</label>
+                <input
+                  type="checkbox"
+                  checked={formData.isActive}
+                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                 />
               </div>
             </div>
-            <div className="mt-4 flex justify-end space-x-4">
-              <button
-                type="button"
-                onClick={() => setEditMode(false)}
-                className="bg-gray-200 text-gray-700 px-4 py-2 rounded"
-              >
-                Cancel
-              </button>
+            <div className="mt-4">
               <button
                 type="submit"
-                className="bg-blue-500 text-white px-4 py-2 rounded"
+                className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
               >
                 Save
+              </button>
+              <button
+                type="button"
+                className="ml-4 text-gray-600 hover:text-gray-800"
+                onClick={() => setEditMode(false)}
+              >
+                Cancel
               </button>
             </div>
           </form>

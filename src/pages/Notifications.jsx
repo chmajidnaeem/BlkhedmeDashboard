@@ -1,9 +1,44 @@
-
+// src/components/Notifications.jsx
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { pushNotification, fetchAllUsers } from '../features/notificationSlice';
 import gallery from "../Assets/gallery.png";
-import NotificationsTable from '../components/NotificationsTable'
+// Import the NotificationsTable from the correct file
+import NotificationsTable from '../components/NotificationsTable'; 
 import { MdOutlineAttachment } from "react-icons/md";
 
 const Notifications = () => {
+  const dispatch = useDispatch();
+  const users = useSelector((state) => state.notifications.users);
+  const notificationStatus = useSelector((state) => state.notifications.notificationStatus);
+
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    resourceType: 'provider',
+    city: '',
+    image: null,
+    userIds: [],
+  });
+
+  useEffect(() => {
+    // Fetch all users when the component mounts
+    dispatch(fetchAllUsers());
+  }, [dispatch]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    dispatch(pushNotification(formData));
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+
   return (
     <div className="overflow-x-auto">
       <div className="">
@@ -123,7 +158,7 @@ const Notifications = () => {
             </div>
           </form>
         </div>
-        <NotificationsTable />
+        <NotificationsTable users={users} />
       </div>
     </div>
   );

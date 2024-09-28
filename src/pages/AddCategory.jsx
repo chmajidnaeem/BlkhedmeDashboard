@@ -1,15 +1,15 @@
 import React, { useState, useRef, useEffect } from "react";
 import { FaBuffer, FaRegImage } from "react-icons/fa";
 import axios from "axios";
-import { useDispatch, useSelector } from "react-redux";
-import { addCategory, fetchCategories } from "../features/categorySlice"; // Adjust the import path as necessary
+import { useDispatch } from "react-redux";
+import { addCategory } from "../features/categorySlice"; // Adjust the import path as necessary
 
 const CategorySetup = () => {
   const dispatch = useDispatch();
   const [language, setLanguage] = useState("default");
   const [selectedFile, setSelectedFile] = useState(null);
-  const [categoryName, setCategoryName] = useState(""); // Add state for category name
-  const [selectedCity, setSelectedCity] = useState(""); // Add state for selected city
+  const [categoryName, setCategoryName] = useState("");
+  const [selectedCity, setSelectedCity] = useState(""); // This will hold the city ID
   const fileInputRef = useRef(null);
   const [showUploadArea, setShowUploadArea] = useState(true);
   const [locations, setLocations] = useState([]);
@@ -31,7 +31,7 @@ const CategorySetup = () => {
   const fetchData = async () => {
     try {
       const { data } = await axios.get("https://apiv2.blkhedme.com/api/locations/show");
-      setLocations(data.location);
+      setLocations(data.location); // Make sure this contains both title and id
     } catch (error) {
       console.error("There was an error fetching the data!", error);
     }
@@ -43,32 +43,31 @@ const CategorySetup = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
+  
     if (!categoryName || !selectedCity || !selectedFile) {
       alert("Please fill all fields and upload an image.");
       return;
     }
-
+  
     const formData = new FormData();
-    formData.append("name", categoryName);
-    formData.append("city", selectedCity);
-    formData.append("image", selectedFile);
-
+    formData.append("title", categoryName); // Ensure 'title' matches the expected key
+    formData.append("city", selectedCity);   // Ensure 'city' matches the expected key (ID)
+    formData.append("file", selectedFile);   // Ensure 'file' is a valid file object
+  
     try {
-      // Dispatch the addCategory action with the new category data
-      await dispatch(addCategory(formData));
+      await dispatch(addCategory(formData)).unwrap();
       alert("Data submitted successfully!");
-      // Reset the form fields
       setCategoryName("");
       setSelectedCity("");
       setSelectedFile(null);
       setShowUploadArea(true);
-      fetchData(); // Optionally refetch locations or categories here
+      
     } catch (error) {
       console.error("Error submitting the category:", error);
-      alert("Failed to submit data. Please try again.");
+      alert(`Failed to submit data: ${error.message || error}`);
     }
   };
+  
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100 font-poppins">
@@ -78,25 +77,19 @@ const CategorySetup = () => {
         <form onSubmit={handleSubmit}>
           <div className="flex space-x-4 mb-6">
             <button
-              className={`px-4 py-2 rounded-md ${
-                language === "default" ? "bg-blue-500 text-white" : "bg-gray-200"
-              }`}
+              className={`px-4 py-2 rounded-md ${language === "default" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
               onClick={() => setLanguage("default")}
             >
               Default
             </button>
             <button
-              className={`px-4 py-2 rounded-md ${
-                language === "english" ? "bg-blue-500 text-white" : "bg-gray-200"
-              }`}
+              className={`px-4 py-2 rounded-md ${language === "english" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
               onClick={() => setLanguage("english")}
             >
               English
             </button>
             <button
-              className={`px-4 py-2 rounded-md ${
-                language === "arabic" ? "bg-blue-500 text-white" : "bg-gray-200"
-              }`}
+              className={`px-4 py-2 rounded-md ${language === "arabic" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
               onClick={() => setLanguage("arabic")}
             >
               Arabic - العربية
@@ -104,9 +97,7 @@ const CategorySetup = () => {
           </div>
 
           <div className="mb-6">
-            <label className="block text-gray-600 font-semibold mb-2">
-              Category Name (Default)
-            </label>
+            <label className="block text-gray-600 font-semibold mb-2">Category Name (Default)</label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3">
                 <FaBuffer className="h-5 w-5 text-gray-400" />
@@ -115,7 +106,7 @@ const CategorySetup = () => {
                 type="text"
                 placeholder="Enter Category Name"
                 value={categoryName}
-                onChange={(e) => setCategoryName(e.target.value)} // Update state on input change
+                onChange={(e) => setCategoryName(e.target.value)}
                 className="w-full pl-10 p-3 border rounded-md focus:outline-none"
               />
             </div>
@@ -126,12 +117,12 @@ const CategorySetup = () => {
             <div className="relative">
               <select
                 value={selectedCity}
-                onChange={(e) => setSelectedCity(e.target.value)} // Update state on city selection
+                onChange={(e) => setSelectedCity(e.target.value)} // Update state with city ID
                 className="w-1/2 md:w-full p-3 border rounded-md focus:outline-none"
               >
                 <option value="">Select City</option>
-                {locations.map((location, index) => (
-                  <option value={location.title} key={index}>{location.title}</option>
+                {locations.map((location) => (
+                  <option value={location.id} key={location.id}>{location.title}</option> // Use location.id
                 ))}
               </select>
             </div>

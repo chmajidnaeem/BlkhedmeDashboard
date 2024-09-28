@@ -3,83 +3,10 @@ import { BsThreeDots } from "react-icons/bs";
 import notificationImg from "../Assets/notificationImg.png";
 import { IoMdStar } from "react-icons/io";
 
-const NotificationsTable = () => {
-  const services = [
-    {
-      id: 1,
-      name: "John Martin",
-      ratings: "4.5",
-      contact: "providerrequest@gmail.com +96213105164",
-      category: "Electricity",
-      views: "89",
-      reports: "5",
-      calls: "5",
-      status: true,
-      image: notificationImg, // Add image to each service
-    },
-    {
-      id: 2,
-      name: "John Martin",
-      ratings: "4.5",
-      contact: "providerrequest@gmail.com +96213105164",
-      category: "Electricity",
-      views: "89",
-      reports: "5",
-      calls: "5",
-      status: true,
-      image: notificationImg, // Add image to each service
-    },
-    {
-      id: 3,
-      name: "John Martin",
-      ratings: "4.5",
-      contact: "providerrequest@gmail.com +96213105164",
-      category: "Electricity",
-      views: "89",
-      reports: "5",
-      calls: "5",
-      status: true,
-      image: notificationImg, // Add image to each service
-    },
-    {
-      id: 4,
-      name: "John Martin",
-      ratings: "4.5",
-      contact: "providerrequest@gmail.com +96213105164",
-      category: "Electricity",
-      views: "89",
-      reports: "5",
-      calls: "5",
-      status: true,
-      image: notificationImg, // Add image to each service
-    },
-    {
-      id: 5,
-      name: "John Martin",
-      ratings: "4.5",
-      contact: "providerrequest@gmail.com +96213105164",
-      category: "Electricity",
-      views: "89",
-      reports: "5",
-      calls: "5",
-      status: true,
-      image: notificationImg, // Add image to each service
-    },
-    {
-      id: 6,
-      name: "John Martin",
-      ratings: "4.5",
-      contact: "providerrequest@gmail.com +96213105164",
-      category: "Electricity",
-      views: "89",
-      reports: "5",
-      calls: "5",
-      status: true,
-      image: notificationImg, // Add image to each service
-    },
-
-    // Add more services here as needed
-  ];
+const NotificationsTable = ({ users }) => {
+  if (!Array.isArray(users)) {
+    return <div>No users found</div>;
+  }
 
   return (
     <div className="mt-4">
@@ -104,31 +31,26 @@ const NotificationsTable = () => {
               </th>
               <th className="p-0 ">
                 <span className="block py-2 px-3 border-r border-gray-300">
-                  {" "}
                   Rating
                 </span>
               </th>
               <th className="p-0 ">
                 <span className="block py-2 px-3 border-r border-gray-300">
-                  {" "}
                   Contact
                 </span>
               </th>
               <th className="p-0 ">
                 <span className="block py-2 px-3 border-r border-gray-300">
-                  {" "}
                   Category
                 </span>
               </th>
               <th className="p-0 ">
                 <span className="block py-2 px-3 border-r border-gray-300">
-                  {" "}
                   Number of Views
                 </span>
               </th>
               <th className="p-0 ">
                 <span className="block py-2 px-3 border-r border-gray-300">
-                  {" "}
                   Number of Reports
                 </span>
               </th>
@@ -139,13 +61,11 @@ const NotificationsTable = () => {
               </th>
               <th className="p-0 ">
                 <span className="block py-2 px-3 border-r border-gray-300">
-                  {" "}
                   Service Availability
                 </span>
               </th>
               <th className="p-0 ">
                 <span className="block py-2 px-3 border-r border-gray-300">
-                  {" "}
                   Status
                 </span>
               </th>
@@ -155,36 +75,33 @@ const NotificationsTable = () => {
             </tr>
           </thead>
           <tbody>
-            {services.map((service, index) => (
-              <tr
-                key={service.id}
-                className="border-b text-xs text-center text-gray-800"
-              >
+            {users.map((user, index) => (
+              <tr key={user.id} className="border-b text-xs text-center text-gray-800">
                 <td className="p-3">
                   <input type="checkbox" className="h-4 w-4 rounded" />
                 </td>
-                <td className="p-3">{`0${index + 1}`}</td>
+                <td className="p-3">{index + 1}</td>
                 <td className="p-3">
                   <div className="flex items-center space-x-1">
                     <img
-                      src={service.image}
+                      src={notificationImg}
                       alt="Provider"
                       className="w-8 h-8 rounded-full"
                     />
-                    <span>{service.name}</span>
+                    <span>{user.username}</span>
                   </div>
                 </td>
                 <td className="p-3">
                   <div className="flex items-center space-x-1">
                     <IoMdStar className="text-[#E5801A]" />
-                    <span> {service.ratings}</span>
+                    <span>{user.average_rating || "N/A"}</span>
                   </div>
                 </td>
-                <td className="p-3">{service.contact}</td>
-                <td className="p-3">{service.category}</td>
-                <td className="p-3">{service.views}</td>
-                <td className="p-3">{service.reports}</td>
-                <td className="p-3">{service.calls}</td>
+                <td className="p-3">{user.phone || "N/A"}</td>
+                <td className="p-3">{user.category || "N/A"}</td>
+                <td className="p-3">{user.provider_reviews || "N/A"}</td>
+                <td className="p-3">{user.reports || "N/A"}</td>
+                <td className="p-3">{user.calls || "N/A"}</td>
                 <td className="p-3">
                   <label className="relative inline-block">
                     <input type="checkbox" className="peer invisible" />

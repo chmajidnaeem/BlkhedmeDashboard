@@ -4,31 +4,26 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchSubCategories, deleteSubCategory, editSubCategory, toggleFeatured } from "../features/subCategorySlice";
 
+
 const SubCategorySetup = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  
+
   const [dropdownOpen, setDropdownOpen] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [editName, setEditName] = useState("");
-  
-  // Access the subcategories state
-  const subCategoriesState = useSelector((state) => state.subCategories);
-  const { subCategories, loading, error } = subCategoriesState;
 
-  // Fetch subcategories when the component mounts
+  const { subCategories, loading, error } = useSelector((state) => state.subCategories);
+
   useEffect(() => {
     dispatch(fetchSubCategories());
   }, [dispatch]);
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error}</p>;
-
   const toggleDropdown = (index) => {
     setDropdownOpen(dropdownOpen === index ? null : index);
   };
-
+  
   const handleEditClick = (category) => {
     setEditingCategory(category.id);
     setEditName(category.name);
@@ -37,16 +32,32 @@ const SubCategorySetup = () => {
 
   const handleDelete = (id) => {
     if (window.confirm("Are you sure you want to delete this subcategory?")) {
-      dispatch(deleteSubCategory(id));
+      dispatch(deleteSubCategory(id))
+        .unwrap()
+        .then(() => dispatch(fetchSubCategories()))
+        .catch((err) => alert(`Failed to delete: ${err.message}`));
     }
   };
 
   const handleSaveEdit = () => {
-    dispatch(editSubCategory({ id: editingCategory, data: { name: editName } }));
-    setEditingCategory(null);
-    setEditName("");
-    setIsModalOpen(false);
+    if (!editName.trim()) {
+      alert("Subcategory name cannot be empty");
+      return;
+    }
+
+    dispatch(editSubCategory({ id: editingCategory, data: { name: editName } }))
+      .unwrap()
+      .then(() => {
+        setEditingCategory(null);
+        setEditName("");
+        setIsModalOpen(false);
+        dispatch(fetchSubCategories());
+      })
+      .catch((err) => alert(`Failed to edit: ${err.message}`));
   };
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error}</p>;
 
   return (
     <>
@@ -62,7 +73,7 @@ const SubCategorySetup = () => {
         </div>
 
         {/* Tabs Section */}
-        <div className="flex space-x-4 border-b-[2px]">
+        <div className="flex space-x-4 border-b-2">
           <button className="font-semibold">All</button>
           <button className="font-medium text-gray-500">Active</button>
           <button className="font-medium text-gray-500">Inactive</button>
@@ -71,31 +82,28 @@ const SubCategorySetup = () => {
         <div className="w-full overflow-x-auto px-1">
           <table className="table-auto w-full bg-white shadow-md rounded-lg font-inter">
             <thead>
-              <tr className="bg-[#2b4dc974] text-[12px] text-white text-center h-14">
+              <tr className="bg-[#2b4dc974] text-xs text-white text-center h-14">
                 <th className="relative p-1 md:p-3">
                   <input type="checkbox" className="w-4 h-4" />
                 </th>
-                <th className="relative p-1 md:p-3">Sl<span className="absolute top-0 bottom-0 right-0 h-[75%] w-[1px] bg-white m-auto"></span></th>
-                <th className="relative p-1 md:p-3">Name<span className="absolute top-0 bottom-0 right-0 h-[75%] w-[1px] bg-white m-auto"></span></th>
-                <th className="relative p-1 md:p-3">Parent Category<span className="absolute top-0 bottom-0 right-0 h-[75%] w-[1px] bg-white m-auto"></span></th>
-                <th className="relative p-1 md:p-3">Number of Providers<span className="absolute top-0 bottom-0 right-0 h-[75%] w-[1px] bg-white m-auto"></span></th>
-                <th className="relative p-1 md:p-3">Is Featured<span className="absolute top-0 bottom-0 right-0 h-[75%] w-[1px] bg-white m-auto"></span></th>
+                <th className="relative p-1 md:p-3">Sl</th>
+                <th className="relative p-1 md:p-3">Name</th>
+                <th className="relative p-1 md:p-3">Parent Category</th>
+                <th className="relative p-1 md:p-3">Number of Providers</th>
+                <th className="relative p-1 md:p-3">Is Featured</th>
                 <th className="p-2">Actions</th>
               </tr>
             </thead>
             <tbody>
               {subCategories.map((category, index) => (
-                <tr
-                  key={category.id}
-                  className="border-b text-sm text-center text-gray-600 h-12"
-                >
+                <tr key={category.id} className="border-b text-sm text-center text-gray-600 h-12">
                   <td className="p-2">
                     <input type="checkbox" className="w-4 h-4" />
                   </td>
                   <td className="p-2">{index + 1}</td>
                   <td className="p-2">{category.name}</td>
-                  <td className="p-2">{category.ParentCategory}</td>
-                  <td className="p-2">{category.NumberOfProvider}</td>
+                  <td className="p-2">{category.parend_id || "N/A"}</td>
+                  <td className="p-2">{category.NumberOfProvider || "N/A"}</td>
                   <td className="p-2">
                     <label className="inline-flex items-center cursor-pointer">
                       <input
@@ -104,7 +112,7 @@ const SubCategorySetup = () => {
                         onChange={() => dispatch(toggleFeatured(category.id))}
                         className="sr-only peer"
                       />
-                      <div className="relative w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                      <div className="relative w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                   </td>
                   <td className="relative p-2">

@@ -10,12 +10,12 @@ import { useNavigate } from 'react-router-dom'; // Import useNavigate for redire
 const AddNewSeeker = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    contactNumber: '',
+    first_name: '',
+    last_last: '',
+    phone: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirm_password: ''
   });
   const [successMessage, setSuccessMessage] = useState('');
   
@@ -51,7 +51,7 @@ const AddNewSeeker = () => {
     // Dispatch the action to add a new seeker
     dispatch(addSeeker({
       ...formData,
-      image: selectedImage, 
+      profile_image: selectedImage, 
       name: `${formData.firstName} ${formData.lastName}`,
       ratings: "0", // Default ratings
       calls: "0",   // Default call count
@@ -61,12 +61,12 @@ const AddNewSeeker = () => {
       .then(() => {
         // Ensure form data is reset only after the action completes
         setFormData({
-          firstName: '',
-          lastName: '',
-          contactNumber: '',
+          first_name: '',
+          last_name: '',
+          phone: '',
           email: '',
           password: '',
-          confirmPassword: ''
+          confirm_password: ''
         });
         setSelectedImage(null); // Clear the selected image
         setSuccessMessage('Seeker added successfully!'); // Show success message
@@ -133,7 +133,7 @@ const AddNewSeeker = () => {
                     </label>
                     <input
                       type="text"
-                      name="firstName"
+                      name="first_name"
                       id="firstName"
                       value={formData.firstName}
                       onChange={handleInputChange}
@@ -147,7 +147,7 @@ const AddNewSeeker = () => {
                     </label>
                     <input
                       type="text"
-                      name="lastName"
+                      name="last_name"
                       id="lastName"
                       value={formData.lastName}
                       onChange={handleInputChange}
@@ -165,7 +165,7 @@ const AddNewSeeker = () => {
                     <PhoneInput
                       country={"pk"}
                       value={formData.contactNumber}
-                      onChange={(value) => setFormData({ ...formData, contactNumber: value })}
+                      onChange={(value) => setFormData({ ...formData, phone: value })}
                       inputClass="w-full border p-2 rounded-md"
                       inputStyle={{ width: "100%" }}
                       containerClass="border rounded-md w-full"
@@ -206,7 +206,7 @@ const AddNewSeeker = () => {
                     />
                   </div>
                   <div className="flex flex-col w-full">
-                    <label htmlFor="confirmPassword" className="mb-1">
+                    <label htmlFor="confirm_password" className="mb-1">
                       Confirm Password
                     </label>
                     <input
