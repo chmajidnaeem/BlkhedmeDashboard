@@ -3,7 +3,8 @@ import SeekerTable from "../components/SeekerTable";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchSeekers } from "../features/seekerSlice";
-
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 const ListOfSeekers = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -30,7 +31,10 @@ const ListOfSeekers = () => {
 
   // Handling loading and error states
   if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error}</p>;
+  if (error) {
+    toast.error(`Error: ${error.message || error}`);
+    return null;  // Prevent further rendering if there's an error
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 overflow-x-auto">

@@ -2,7 +2,8 @@ import React from 'react'
 
 const CertifiedProvider = () => {
   return (
-    <div>CertifiedProvider</div>
+    <div>
+      CertifiedProvider</div>
   )
 }
 

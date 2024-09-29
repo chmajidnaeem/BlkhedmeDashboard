@@ -3,6 +3,9 @@ import { FaStar } from 'react-icons/fa';
 import { FiMoreVertical } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 import {
   fetchProviders,
   deleteProvider,
@@ -85,7 +88,10 @@ const ProviderList = () => {
   };
 
   if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error}</p>;
+  if (error) {
+    toast.error(`Error: ${error.message || error}`);
+    return null;  // Prevent further rendering if there's an error
+  }
 
   return (
     <div className="space-y-4 font-poppins">
