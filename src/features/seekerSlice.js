@@ -6,8 +6,7 @@ const API_URL = 'https://apiv2.blkhedme.com/api/admin/seeker';
 
 // Function to get the authorization token
 const getAuthToken = () => {
-  // Replace this with your method of retrieving the token
-  return localStorage.getItem('authToken'); // Assuming you store it in local storage
+  return localStorage.getItem('authToken'); 
 };
 
 // Thunks for async actions
@@ -15,7 +14,7 @@ export const fetchSeekers = createAsyncThunk('seekers/fetchSeekers', async () =>
   try {
     const response = await axios.get(API_URL, {
       headers: {
-        Authorization: `Bearer ${getAuthToken()}`, // Add authorization header
+        Authorization: `Bearer ${getAuthToken()}`, 
       },
     });
     console.log('Fetched Seekers:', response.data);
@@ -29,29 +28,66 @@ export const fetchSeekers = createAsyncThunk('seekers/fetchSeekers', async () =>
 // Add a new seeker
 export const addSeeker = createAsyncThunk('seekers/addSeeker', async (newSeeker) => {
   try {
-    const response = await axios.put(`${API_URL}/`, newSeeker, {
+    // Initialize a new object with default values
+    const seekerToAdd = {
+      profile_image: newSeeker.profile_image || null,
+      ratings: "0", // Default ratings
+      calls: "0",   // Default call count
+      reviews: "0", // Default review count
+      date: Math.floor(Date.now() / 1000), // Current timestamp
+    };
+
+    // Only add fields that have values from newSeeker
+    if (newSeeker.first_name) seekerToAdd.first_name = newSeeker.first_name;
+    if (newSeeker.last_name) seekerToAdd.last_name = newSeeker.last_name;
+    if (newSeeker.phone) seekerToAdd.phone = newSeeker.phone;
+    if (newSeeker.email) seekerToAdd.email = newSeeker.email;
+    if (newSeeker.password) seekerToAdd.password = newSeeker.password;
+
+    // Log the data being sent to the server
+    console.log('Adding seeker with payload:', seekerToAdd);
+
+    const response = await axios.post(`${API_URL}/store`, seekerToAdd, {
       headers: {
-        Authorization: `Bearer ${getAuthToken()}`, // Add authorization header
+        Authorization: `Bearer ${getAuthToken()}`,
+        'Content-Type': 'application/json', // Important for file uploads
       },
     });
+    console.log('Added seeker response:', response.data); // Log the response
+    
     return response.data; // Return the response data (newly added seeker)
-  } catch (error) {
-    console.error('Error adding seeker:', error);
-    throw error; // This will trigger the rejected case
+  }catch (error) {
+    if (error.response.data.message){
+      const errorObject=error.response.data.message
+      throw new Error(JSON.stringify(errorObject));
+    }
+    // Log the complete error object for debugging
+    console.error('Complete error object:', error);
+    
+    // Check if error response exists and contains the expected structure
+    const errorResponse = error.response ? error.response.data : {};
+    console.error('Error response data:', errorResponse);
+    
+    // Throw the relevant part of the error to be caught in the component
+    throw error; // Or throw error.response.data if you want to pass the whole response
   }
 });
 
 // Update an existing seeker
 export const updateSeeker = createAsyncThunk('seekers/updateSeeker', async ({ id, updatedData }) => {
   try {
-    const response = await axios.put(`${API_URL}/store/Update/${id}`, updatedData, {
+    console.log('Updating seeker with ID:', id);
+    console.log('Updated data:', updatedData);
+
+    const response = await axios.post(`${API_URL}/Update/${id}`, updatedData, {
       headers: {
         Authorization: `Bearer ${getAuthToken()}`, // Add authorization header
       },
     });
-    return response.data.data;
+    console.log('Updated seeker response:', response.data); 
+    return response.data;
   } catch (error) {
-    console.error('Error updating seeker:', error);
+    console.error('Error updating seeker:', error.response?.data || error.message);
     throw error; // This will trigger the rejected case
   }
 });
@@ -59,15 +95,18 @@ export const updateSeeker = createAsyncThunk('seekers/updateSeeker', async ({ id
 // Delete a seeker
 export const deleteSeeker = createAsyncThunk('seekers/deleteSeeker', async (id) => {
   try {
+    console.log('Deleting seeker with ID:', id);
+
     await axios.delete(`${API_URL}/${id}`, {
       headers: {
-        Authorization: `Bearer ${getAuthToken()}`, // Add authorization header
+        Authorization: `Bearer ${getAuthToken()}`, 
       },
     });
-    return id; // Return the id of the deleted seeker
+    console.log('Seeker deleted:', id);
+    return id; // Returning id of the deleted seeker
   } catch (error) {
-    console.error('Error deleting seeker:', error);
-    throw error; // This will trigger the rejected case
+    console.error('Error deleting seeker:', error.response?.data || error.message);
+    throw error; // will throw error if rejected
   }
 });
 
@@ -92,7 +131,7 @@ const seekerSlice = createSlice({
       })
       .addCase(fetchSeekers.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message; // Capture error message
+        state.error = action.error.message; 
         console.error('Fetch Seekers Error:', state.error);
       })
 

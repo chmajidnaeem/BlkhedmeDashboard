@@ -17,13 +17,29 @@ const SeekerTable = ({ seekers }) => {
   // Handle the edit button click
   const handleEdit = (seeker) => {
     setEditingSeeker(seeker);
-    setUpdatedData({ ...seeker }); // Set the current seeker data for editing
+    setUpdatedData({ // Pre-fill the form with current seeker data
+      first_name: seeker.first_name || "",
+      last_name: seeker.last_name || "",
+      phone: seeker.phone || "",
+    });
   };
 
   // Handle form submission for updating seeker
   const handleUpdate = (e) => {
     e.preventDefault(); // Prevent default form submission
-    dispatch(updateSeeker({ id: editingSeeker.id, updatedData })); // Dispatch update action
+
+    // Create a new object with only the fields that are changed or required
+    const { id } = editingSeeker;
+    const payload = { id, updatedData: {} };
+
+    // Populate updatedData with only changed fields
+    Object.keys(updatedData).forEach((key) => {
+      if (updatedData[key]) {
+        payload.updatedData[key] = updatedData[key];
+      }
+    });
+
+    dispatch(updateSeeker(payload)); // Dispatch update action
     setEditingSeeker(null); // Close edit mode
   };
 
@@ -31,6 +47,22 @@ const SeekerTable = ({ seekers }) => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setUpdatedData({ ...updatedData, [name]: value }); // Update the specific field
+  };
+
+  // Handle toggle change
+  const handleToggleChange = (seeker) => {
+    const updatedStatus = seeker.status === "active" ? "inactive" : "active"; // Toggle the status
+    // Prepare updated data with existing values for required fields
+    const payload = {
+      id: seeker.id,
+      updatedData: {
+        status: updatedStatus,
+        first_name: seeker.first_name,
+        last_name: seeker.last_name,
+        phone: seeker.phone,
+      },
+    };
+    dispatch(updateSeeker(payload)); // Dispatch the action to update status
   };
 
   return (
@@ -71,7 +103,12 @@ const SeekerTable = ({ seekers }) => {
                 <td className="p-4">{new Date(seeker.date).toLocaleDateString()}</td> {/* Format date */}
                 <td className="p-4">
                   <label className="relative inline-block">
-                    <input type="checkbox" className="peer invisible" />
+                    <input 
+                      type="checkbox" 
+                      className="peer invisible" 
+                      checked={seeker.status === "active"} // Check based on seeker status
+                      onChange={() => handleToggleChange(seeker)} // Handle toggle change
+                    />
                     <span className="absolute top-0 left-0 w-9 h-5 cursor-pointer rounded-full bg-slate-200 border border-slate-300 transition-all duration-100 peer-checked:bg-sky-700"></span>
                     <span className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full z-10 transition-all duration-100 peer-checked:translate-x-4"></span>
                   </label>
@@ -101,31 +138,41 @@ const SeekerTable = ({ seekers }) => {
             <h2 className="text-lg font-semibold mb-4">Edit Seeker</h2>
             <form onSubmit={handleUpdate}>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="name">Name:</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="first_name">First Name:</label>
                 <input
                   type="text"
-                  name="name"
-                  value={updatedData.name}
+                  name="first_name"
+                  value={updatedData.first_name}
                   onChange={handleInputChange}
                   required
                   className="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-200"
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="contact">Contact:</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="last_name">Last Name:</label>
                 <input
                   type="text"
-                  name="contact"
-                  value={updatedData.contact}
+                  name="last_name"
+                  value={updatedData.last_name}
                   onChange={handleInputChange}
                   required
                   className="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-200"
                 />
               </div>
-              {/* Add more fields as necessary */}
-              <div className="flex justify-end mt-4">
-                <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">Update</button>
-                <button type="button" className="ml-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition" onClick={() => setEditingSeeker(null)}>Cancel</button>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="phone">Phone:</label>
+                <input
+                  type="text"
+                  name="phone"
+                  value={updatedData.phone}
+                  onChange={handleInputChange}
+                  required
+                  className="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-200"
+                />
+              </div>
+              <div className="flex justify-between mt-4">
+                <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">Update</button>
+                <button type="button" className="bg-gray-300 text-gray-700 px-4 py-2 rounded" onClick={() => setEditingSeeker(null)}>Cancel</button>
               </div>
             </form>
           </div>

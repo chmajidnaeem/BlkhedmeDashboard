@@ -10,7 +10,7 @@ const authSlice = createSlice({
       login: (state, action) => {
         state.isAuthenticated = true;
         state.token = action.payload;
-        localStorage.setItem('authToken', action.payload); // Save token in localStorage
+        localStorage.setItem('authToken', action.payload); 
       },
       logout: (state) => {
         state.isAuthenticated = false;

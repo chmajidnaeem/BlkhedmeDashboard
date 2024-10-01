@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { FaBuffer, FaRegImage } from "react-icons/fa";
 import axios from "axios";
 import { useDispatch } from "react-redux";
-import { addCategory } from "../features/categorySlice"; // Adjust the import path as necessary
+import { addCategory } from "../features/categorySlice"; 
 
 const CategorySetup = () => {
   const dispatch = useDispatch();
@@ -31,7 +31,7 @@ const CategorySetup = () => {
   const fetchData = async () => {
     try {
       const { data } = await axios.get("https://apiv2.blkhedme.com/api/locations/show");
-      setLocations(data.location); // Make sure this contains both title and id
+      setLocations(data.location); 
     } catch (error) {
       console.error("There was an error fetching the data!", error);
     }
@@ -50,9 +50,9 @@ const CategorySetup = () => {
     }
   
     const formData = new FormData();
-    formData.append("title", categoryName); // Ensure 'title' matches the expected key
-    formData.append("city", selectedCity);   // Ensure 'city' matches the expected key (ID)
-    formData.append("file", selectedFile);   // Ensure 'file' is a valid file object
+    formData.append("title", categoryName); 
+    formData.append("city", selectedCity);   
+    formData.append("file", selectedFile);   
   
     try {
       await dispatch(addCategory(formData)).unwrap();

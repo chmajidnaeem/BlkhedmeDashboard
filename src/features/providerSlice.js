@@ -14,7 +14,7 @@ export const fetchProviders = createAsyncThunk('provider/fetchProviders', async 
       },
     });
     console.log("Fetched Providers: ", response.data.data);
-    return response.data.data; // Ensure this returns the array of providers
+    return response.data.data;
   } catch (error) {
     console.error('Error fetching providers:', error);
     throw error;
@@ -33,15 +33,15 @@ export const addProvider = createAsyncThunk(
     }
 
     try {
-      const response = await axios.put(`${API_URL}/store`, newProvider, { // Updated endpoint
+      const response = await axios.post(`${API_URL}/store`, newProvider, { 
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'appliation/json', // Important for file uploads
+          'Content-Type': 'application/json', 
         },
       });
 
       console.log("Add Provider Response: ", response.data);
-      return response.data.data; // Assuming response.data.data is the new provider object
+      return response.data.data;
     } catch (error) {
       console.error('Error adding provider:', error.response ? error.response.data : error.message);
       return rejectWithValue(error.response ? error.response.data : 'Unknown error');
@@ -55,14 +55,14 @@ export const updateProvider = createAsyncThunk('providers/updateProvider', async
   console.log("updatedData : ", updatedData);
   const token = localStorage.getItem('authToken');
   try {
-    const response = await axios.post(`${API_URL}/Update/${id}`, updatedData, { // Ensure this endpoint is correct
+    const response = await axios.post(`${API_URL}/update/${id}`, updatedData, { // Ensure this endpoint is correct
       headers: {
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json', // Important for file uploads
+        'Content-Type': 'application/json', 
       },
     });
     console.log("Updating Provider Response: ", response.data);
-    return response.data.data; // Assuming response.data.data is the updated provider object
+    return response.data; 
   } catch (error) {
     if (error.response) {
       console.error('Error updating provider (response):', error.response);
@@ -78,11 +78,39 @@ export const updateProvider = createAsyncThunk('providers/updateProvider', async
   }
 });
 
+// Async action to update provider status
+export const updateProviderStatus = createAsyncThunk(
+  'providers/updateProviderStatus',
+  async ({ providerId, newStatus }, { rejectWithValue }) => {
+    const token = localStorage.getItem('authToken'); 
+    try {
+      const response = await axios.post(
+        `${API_URL}/status`,
+        {
+          provider_id: providerId,
+          professional_status: newStatus,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+          },
+        }
+      );
+      console.log('Status Update Response:', response.data);
+      return { providerId, newStatus }; 
+    } catch (error) {
+      console.error('Error updating provider status:', error.response ? error.response.data : error.message);
+      return rejectWithValue(error.response ? error.response.data : 'Unknown error');
+    }
+  }
+);
+
 // Deleting a provider
 export const deleteProvider = createAsyncThunk('providers/deleteProvider', async (id) => {
   const token = localStorage.getItem('authToken');
   try {
-    await axios.delete(`${API_URL}/${id}`, { // Ensure this endpoint is correct
+    await axios.delete(`${API_URL}/${id}`, { 
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -97,7 +125,7 @@ export const deleteProvider = createAsyncThunk('providers/deleteProvider', async
 const providerSlice = createSlice({
   name: 'providers',
   initialState: {
-    providers: [], // Array of provider objects
+    providers: [],
     loading: false,
     error: null,
   },
@@ -119,7 +147,7 @@ const providerSlice = createSlice({
       })
 
       // Adding provider
-      .addCase(addProvider.pending, (state) => { // Optional: handle pending state
+      .addCase(addProvider.pending, (state) => { 
         state.loading = true;
         state.error = null;
       })
@@ -133,7 +161,7 @@ const providerSlice = createSlice({
       })
 
       // Updating provider
-      .addCase(updateProvider.pending, (state) => { // Optional: handle pending state
+      .addCase(updateProvider.pending, (state) => { 
         state.loading = true;
         state.error = null;
       })
@@ -150,8 +178,26 @@ const providerSlice = createSlice({
         state.error = action.error.message;
       })
 
+      // Updating provider status
+      .addCase(updateProviderStatus.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateProviderStatus.fulfilled, (state, action) => {
+        state.loading = false;
+        const { providerId, newStatus } = action.payload;
+        const provider = state.providers.find((p) => p.id === providerId);
+        if (provider) {
+          provider.status = newStatus;
+        }
+      })
+      .addCase(updateProviderStatus.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      })
+
       // Deleting provider
-      .addCase(deleteProvider.pending, (state) => { // Optional: handle pending state
+      .addCase(deleteProvider.pending, (state) => { 
         state.loading = true;
         state.error = null;
       })

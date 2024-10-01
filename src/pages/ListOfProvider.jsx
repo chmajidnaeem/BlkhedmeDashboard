@@ -5,13 +5,72 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
 import {
   fetchProviders,
   deleteProvider,
   updateProvider,
+  updateProviderStatus,
 } from '../features/providerSlice';
 import notificationImg from '../Assets/notificationImg.png';
+
+// Modal Component for editing provider
+const EditProviderModal = ({ isOpen, onClose, onSubmit, formData, setFormData }) => {
+  if (!isOpen) return null;
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+        <h2 className="text-lg font-semibold mb-4">Edit Provider</h2>
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            name="first_name"
+            value={formData.first_name}
+            onChange={handleChange}
+            placeholder="First Name"
+            className="border mb-2 p-2 w-full"
+            required
+          />
+          <input
+            type="text"
+            name="last_name"
+            value={formData.last_name}
+            onChange={handleChange}
+            placeholder="Last Name"
+            className="border mb-2 p-2 w-full"
+            required
+          />
+          {/* If you need to display other fields as read-only, you can include them here */}
+          <div className="flex justify-between mt-4">
+            <button
+              type="button"
+              className="bg-gray-300 text-gray-700 px-4 py-2 rounded"
+              onClick={onClose}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="bg-[#0085FF] text-white px-4 py-2 rounded"
+            >
+              Save
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
 
 const ProviderList = () => {
   const [dropdownOpen, setDropdownOpen] = useState(null);
@@ -20,46 +79,64 @@ const ProviderList = () => {
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
-    rating: '',
-    phone: '', // Updated to match the field in the API
-    profession: '', // Updated to match the field in the API
-    views_count: 0, // Updated to match the field in the API
-    isAvailable: false,
-    isActive: false,
+    // Additional fields to keep the original data
+    area_of_operation: '',
+    profession: '',
   });
 
   const [filterType, setFilterType] = useState('all');
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
   const providersState = useSelector((state) => state.providers);
-  const { providers = [], loading = false, error = null } = providersState || {};
+  const { providers = [], loading = false, error = null, updateStatus, updateError } = providersState || {};
 
   useEffect(() => {
     dispatch(fetchProviders());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (updateStatus === 'succeeded') {
+      toast.success('Provider status updated successfully');
+      dispatch(fetchProviders());
+    }
+    if (updateStatus === 'failed') {
+      toast.error(`Failed to update status: ${updateError}`);
+    }
+  }, [updateStatus, updateError, dispatch]);
 
   const handleEdit = (provider) => {
     setSelectedProvider(provider);
     setFormData({
       first_name: provider.first_name || '',
       last_name: provider.last_name || '',
-      rating: provider.rating || 0,
-      phone: provider.phone || '', // Use phone field
-      profession: provider.profession || '', // Use profession field
-      views_count: provider.views_count || 0,
-      isAvailable: provider.availability || false,
-      isActive: provider.status === 'active', // Use status field for active/inactive state
+      // Ensure other fields are retained and not cleared
+      area_of_operation: provider.area_of_operation || '',
+      profession: provider.profession || '',
     });
     setEditMode(true);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (editMode) {
-      dispatch(updateProvider({ id: selectedProvider.id, updatedData: formData }));
-    }
+  const handleSubmit = () => {
+    const updatedData = {
+      ...selectedProvider,
+      first_name: formData.first_name,
+      last_name: formData.last_name,
+      // Keep other fields unchanged
+      area_of_operation: formData.area_of_operation,
+      profession: formData.profession,
+    };
+
+    dispatch(updateProvider({ id: selectedProvider.id, updatedData }))
+      .unwrap()
+      .then(() => {
+        toast.success('Provider updated successfully');
+        dispatch(fetchProviders());
+      })
+      .catch((err) => {
+        toast.error(`Update failed: ${err.message || err}`);
+      });
+
     setEditMode(false);
     resetForm();
   };
@@ -68,29 +145,38 @@ const ProviderList = () => {
     setFormData({
       first_name: '',
       last_name: '',
-      rating: '',
-      phone: '',
+      area_of_operation: '',
       profession: '',
-      views_count: 0,
-      isAvailable: false,
-      isActive: false,
     });
   };
 
   const getFilteredProviders = () => {
     if (filterType === 'active') {
-      return providers.filter((provider) => provider.status === 'active');
+      return providers.filter((provider) => provider.professional_status === 'active');
     }
     if (filterType === 'inactive') {
-      return providers.filter((provider) => provider.status !== 'active');
+      return providers.filter((provider) => provider.professional_status !== 'active');
     }
     return providers;
   };
 
-  if (loading) return <p>Loading...</p>;
+  const handleStatusChange = (providerId, currentStatus) => {
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    dispatch(updateProviderStatus({ providerId, newStatus }))
+      .unwrap()
+      .then(() => {
+        dispatch(fetchProviders());
+      })
+      .catch((err) => {
+        toast.error(`Failed to change status: ${err.message || err}`);
+      });
+  };
+
+  if (loading && providers.length === 0) return <p>Loading...</p>;
+
   if (error) {
     toast.error(`Error: ${error.message || error}`);
-    return null;  // Prevent further rendering if there's an error
+    return null;
   }
 
   return (
@@ -105,24 +191,17 @@ const ProviderList = () => {
       </div>
 
       <div className="flex space-x-6 border-b pb-2">
-        <button
-          className={`font-semibold text-md transition-colors ${filterType === 'all' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-500'}`}
-          onClick={() => setFilterType('all')}
-        >
-          All
-        </button>
-        <button
-          className={`font-semibold text-md transition-colors ${filterType === 'active' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-500'}`}
-          onClick={() => setFilterType('active')}
-        >
-          Active
-        </button>
-        <button
-          className={`font-semibold text-md transition-colors ${filterType === 'inactive' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-500'}`}
-          onClick={() => setFilterType('inactive')}
-        >
-          Inactive
-        </button>
+        {['all', 'active', 'inactive'].map((type) => (
+          <button
+            key={type}
+            className={`font-semibold text-md transition-colors ${
+              filterType === type ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-500'
+            }`}
+            onClick={() => setFilterType(type)}
+          >
+            {type.charAt(0).toUpperCase() + type.slice(1)}
+          </button>
+        ))}
       </div>
 
       <div className="w-full overflow-x-auto px-1">
@@ -133,7 +212,7 @@ const ProviderList = () => {
               <th className="p-3">Provider</th>
               <th className="p-3">Rating</th>
               <th className="p-3">Contact</th>
-              <th className="p-3">Category</th> 
+              <th className="p-3">Category</th>
               <th className="p-3">Views</th>
               <th className="p-3">Reports</th>
               <th className="p-3">Calls</th>
@@ -144,16 +223,19 @@ const ProviderList = () => {
           </thead>
           <tbody>
             {getFilteredProviders().map((provider, index) => (
-              <tr key={provider.id} className="border-b text-xs text-center hover:bg-gray-50 transition-colors">
+              <tr
+                key={provider.id}
+                className="border-b text-xs text-center hover:bg-gray-50 transition-colors"
+              >
                 <td className="p-2">{index + 1}</td>
                 <td className="p-2">
                   <div className="flex items-center justify-center">
                     <img
                       src={notificationImg}
-                      alt={`${provider.first_name} ${provider.last_name}`} // Fixed template literal
+                      alt={`${provider.first_name} ${provider.last_name}`}
                       className="w-8 h-8 rounded-full mr-2"
                     />
-                    {`${provider.first_name} ${provider.last_name}`} {/* Fixed template literal */}
+                    {`${provider.first_name} ${provider.last_name}`}
                   </div>
                 </td>
                 <td className="p-2">
@@ -167,26 +249,44 @@ const ProviderList = () => {
                   <br />
                   {provider.phone || 'N/A'}
                 </td>
-                <td className="p-2">{provider.profession || 'N/A'}</td> {/* Profession field */}
-                <td className="p-2">{provider.views_count || 0}</td>
-                <td className="p-2">{provider.provider_reviews_count || "N/A"}</td> {/* Reports field change id didn't found reports feild coming from api so i paste the reviews field here */}
-                <td className="p-2">{provider.call_logs_count
-                  || "N/A"}</td>
                 <td className="p-2">
-                  <input type="checkbox" checked={provider.availability || false} readOnly />
+                  {/* Assuming 'profession' is an object with a 'title' property */}
+                  {provider.profession && typeof provider.profession === 'object'
+                    ? provider.profession.title
+                    : provider.profession || 'N/A'}
+                </td>
+                <td className="p-2">{provider.views_count || 0}</td>
+                <td className="p-2">{provider.provider_reviews_count || 'N/A'}</td>
+                <td className="p-2">{provider.call_logs_count || 'N/A'}</td>
+                <td className="p-2">
+                  <input
+                    type="checkbox"
+                    checked={provider.availability === 'active'}
+                    readOnly
+                  />
                 </td>
                 <td className="p-2">
-                  <input type="checkbox" checked={provider.status === 'active'} readOnly />
+                  <input
+                    type="checkbox"
+                    id={`status-${provider.id}`}
+                    checked={provider.professional_status === 'active'}
+                    onChange={() =>
+                      handleStatusChange(provider.id, provider.professional_status)
+                    }
+                    className="mr-2 cursor-pointer"
+                  />
                 </td>
                 <td className="p-2 relative">
                   <button
                     className="text-gray-500 hover:text-gray-700"
-                    onClick={() => setDropdownOpen(index === dropdownOpen ? null : index)}
+                    onClick={() =>
+                      setDropdownOpen(dropdownOpen === provider.id ? null : provider.id)
+                    }
                   >
                     <FiMoreVertical />
                   </button>
-                  {dropdownOpen === index && (
-                    <div className="absolute right-0 bg-white shadow-md rounded mt-1">
+                  {dropdownOpen === provider.id && (
+                    <div className="absolute right-0 bg-white shadow-md rounded mt-1 z-10">
                       <button
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                         onClick={() => handleEdit(provider)}
@@ -208,90 +308,19 @@ const ProviderList = () => {
         </table>
       </div>
 
-      {/* Edit Provider Modal */}
-      {editMode && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <form
-            className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md mx-auto"
-            onSubmit={handleSubmit}
-          >
-            <h2 className="text-xl font-bold mb-4">Edit Provider</h2>
-            <div className="grid grid-cols-1 gap-4">
-              <div>
-                <label className="block mb-2 text-sm font-semibold">First Name</label>
-                <input
-                  type="text"
-                  value={formData.first_name}
-                  onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                  className="border p-2 w-full rounded"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block mb-2 text-sm font-semibold">Last Name</label>
-                <input
-                  type="text"
-                  value={formData.last_name}
-                  onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                  className="border p-2 w-full rounded"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block mb-2 text-sm font-semibold">Phone</label>
-                <input
-                  type="text"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="border p-2 w-full rounded"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block mb-2 text-sm font-semibold">Profession</label>
-                <input
-                  type="text"
-                  value={formData.profession}
-                  onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
-                  className="border p-2 w-full rounded"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block mb-2 text-sm font-semibold">Availability</label>
-                <input
-                  type="checkbox"
-                  checked={formData.isAvailable}
-                  onChange={(e) => setFormData({ ...formData, isAvailable: e.target.checked })}
-                />
-              </div>
-              <div>
-                <label className="block mb-2 text-sm font-semibold">Status</label>
-                <input
-                  type="checkbox"
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                />
-              </div>
-            </div>
-            <div className="mt-4">
-              <button
-                type="submit"
-                className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
-              >
-                Save
-              </button>
-              <button
-                type="button"
-                className="ml-4 text-gray-600 hover:text-gray-800"
-                onClick={() => setEditMode(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+      <ToastContainer />
+
+      {/* Modal for editing provider */}
+      <EditProviderModal
+        isOpen={editMode}
+        onClose={() => {
+          setEditMode(false);
+          resetForm(); // Reset form when modal closes
+        }}
+        onSubmit={handleSubmit}
+        formData={formData}
+        setFormData={setFormData}
+      />
     </div>
   );
 };

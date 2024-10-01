@@ -4,7 +4,7 @@ import axios from 'axios';
 // API URL and Token
 const PUSH_NOTIFICATION_URL = 'https://apiv2.blkhedme.com/api/admin/push/notification';
 const ALL_USERS_URL = 'https://apiv2.blkhedme.com/api/admin/all/users';
-const API_TOKEN = `${localStorage.getItem('authToken')}`; // Replace with your token
+const API_TOKEN = `${localStorage.getItem('authToken')}`; 
 
 // Async action to push notification
 export const pushNotification = createAsyncThunk(
@@ -18,7 +18,7 @@ export const pushNotification = createAsyncThunk(
       formData.append('city', notificationData.city);
       formData.append('image', notificationData.image);
 
-      // Assuming you have an array of user_ids to send notification to.
+      // array of user_ids to send notification to.
       notificationData.userIds.forEach((id, index) => {
         formData.append(`user_id[${index}]`, id);
       });
@@ -56,7 +56,6 @@ export const fetchAllUsers = createAsyncThunk(
   }
 );
 
-// Initial state
 const initialState = {
   users: [],
   notificationStatus: 'idle', // idle | loading | succeeded | failed
@@ -90,7 +89,7 @@ const notificationSlice = createSlice({
       })
       .addCase(fetchAllUsers.fulfilled, (state, action) => {
         state.usersStatus = 'succeeded';
-        state.users = action.payload;  // Fixed to assign the users array
+        state.users = action.payload;  
       })
       .addCase(fetchAllUsers.rejected, (state, action) => {
         state.usersStatus = 'failed';

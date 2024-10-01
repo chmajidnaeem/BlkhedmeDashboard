@@ -1,13 +1,11 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-// API base URL
+// APIbase URL
 const API_URL = 'https://apiv2.blkhedme.com/api/admin/locations';
 
-// Fetch auth token from localStorage
 const AUTH_TOKEN = `${localStorage.getItem('authToken')}`;
 
-// Utility function to set up headers with Authorization token
 const getHeaders = () => ({
   Authorization: `Bearer ${AUTH_TOKEN}`,
   Accept: 'application/json',
@@ -30,18 +28,18 @@ export const fetchLocations = createAsyncThunk('locations/fetchLocations', async
 // Add a new location (POST)
 export const addLocation = createAsyncThunk('locations/addLocation', async (locationData, { rejectWithValue }) => {
   try {
-    // Ensure country_id is handled, set a default or null if missing
+    // country_id is set a default or null if missing
     const newLocationData = {
       title: locationData.title,
       description: locationData.description || '',
-      country_id: locationData.country_id || null, // Set to null if not provided
+      country_id: locationData.country_id || null, 
     };
 
     const response = await axios.post(API_URL, newLocationData, {
       headers: getHeaders(),
     });
     console.log("Added Location: ", response.data);
-    return response.data.location; // Ensure correct data field is used
+    return response.data.location; 
   } catch (error) {
     console.error("Error adding location:", error);
     return rejectWithValue(error.response ? error.response.data : "Server error");
@@ -51,7 +49,6 @@ export const addLocation = createAsyncThunk('locations/addLocation', async (loca
 // Update an existing location (PUT)
 export const updateLocation = createAsyncThunk('locations/updateLocation', async ({ id, locationData }, { rejectWithValue }) => {
   try {
-    // Handle null or missing fields
     const updatedLocationData = {
       title: locationData.title,
       description: locationData.description || '',
@@ -62,7 +59,7 @@ export const updateLocation = createAsyncThunk('locations/updateLocation', async
       headers: getHeaders(),
     });
     console.log("Updated Location: ", response.data);
-    return response.data.location; // Ensure correct data field is used
+    return response.data.location; 
   } catch (error) {
     console.error("Error updating location:", error);
     return rejectWithValue(error.response ? error.response.data : "Server error");

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { FaBuffer, FaRegImage } from "react-icons/fa";
-import { useDispatch } from 'react-redux'; // Import useDispatch
-import { addSubCategory } from '../features/subCategorySlice'; // Import the addSubCategory action
+import { useDispatch } from 'react-redux'; 
+import { addSubCategory } from '../features/subCategorySlice'; 
 import axios from 'axios';
 
 const SubCategorySetup = () => {
@@ -35,7 +35,7 @@ const SubCategorySetup = () => {
   const fetchData = async () => {
     try {
       const { data } = await axios.get('https://apiv2.blkhedme.com/api/locations/show');
-      setLocations(data.location); // Ensure data.location holds the correct structure
+      setLocations(data.location); 
     } catch (error) {
       console.error('There was an error fetching the data!', error);
     }
@@ -61,7 +61,7 @@ const SubCategorySetup = () => {
         location_id: locationId || null,
         description,
         image: null, // Set to null if you don't want to submit the image
-        parent_id: parentId || -1 // Set to null if not defined
+        parent_id: parentId || -1 // Set to null/-1 if not defined
     };
 
     console.log("Submitting subcategory:", newSubCategory);

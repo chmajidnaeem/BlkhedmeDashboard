@@ -9,19 +9,19 @@ const ListOfSeekers = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // Access the seekers state
+  
   const seekersState = useSelector((state) => state.seekers);
   const { seekers = [], loading = false, error = null } = seekersState || {};
 
-  // State for the active filter ('all', 'active', 'inactive')
+  
   const [filter, setFilter] = useState("all");
 
-  // Fetch seekers when the component loads
+  // Fetched the seekers when the component loads
   useEffect(() => {
     dispatch(fetchSeekers());
   }, [dispatch]);
 
-  // Apply filter logic based on 'status'
+  // filter logic based on 'status'
   const filteredSeekers = seekers.filter((seeker) => {
     if (filter === "all") return true;
     if (filter === "active") return seeker.status === "active"; // Assuming 'status' field in seeker
@@ -33,7 +33,7 @@ const ListOfSeekers = () => {
   if (loading) return <p>Loading...</p>;
   if (error) {
     toast.error(`Error: ${error.message || error}`);
-    return null;  // Prevent further rendering if there's an error
+    return null;  
   }
 
   return (
@@ -96,7 +96,7 @@ const ListOfSeekers = () => {
           </h1>
         </div>
 
-        {/* Seeker Table with filtered seekers */}
+       
         <SeekerTable seekers={filteredSeekers} />
       </div>
     </div>

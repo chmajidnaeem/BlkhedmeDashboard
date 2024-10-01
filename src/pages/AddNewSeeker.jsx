@@ -3,24 +3,26 @@ import { FaEnvelope } from "react-icons/fa";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import uploadImg from '../Assets/download.svg';
-import { useDispatch } from 'react-redux'; // Import Redux hook
-import { addSeeker } from '../features/seekerSlice'; // Import the action
-import { useNavigate } from 'react-router-dom'; // Import useNavigate for redirection
+import { useDispatch } from 'react-redux';
+import { addSeeker } from '../features/seekerSlice';
+import { useNavigate } from 'react-router-dom';
 
 const AddNewSeeker = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [formData, setFormData] = useState({
     first_name: '',
-    last_last: '',
+    last_name: '',
     phone: '',
     email: '',
     password: '',
     confirm_password: ''
   });
+
+  const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState('');
-  
-  const dispatch = useDispatch(); // Initialize Redux dispatch
-  const navigate = useNavigate(); // Initialize navigation
+
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -40,44 +42,62 @@ const AddNewSeeker = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    setErrors({ ...errors, [name]: '' });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault(); // Prevent the form from refreshing the page
-  
-    // Clear success message before submitting
+
+    // Clear success message and errors before submitting
     setSuccessMessage('');
-  
-    // Dispatch the action to add a new seeker
-    dispatch(addSeeker({
-      ...formData,
-      profile_image: selectedImage, 
-      name: `${formData.firstName} ${formData.lastName}`,
-      ratings: "0", // Default ratings
-      calls: "0",   // Default call count
-      reviews: "0", // Default review count
-      date: Math.floor(Date.now() / 1000), // Current timestamp
-    }))
-      .then(() => {
-        // Ensure form data is reset only after the action completes
-        setFormData({
-          first_name: '',
-          last_name: '',
-          phone: '',
-          email: '',
-          password: '',
-          confirm_password: ''
-        });
-        setSelectedImage(null); // Clear the selected image
-        setSuccessMessage('Seeker added successfully!'); // Show success message
-      })
-      .catch((error) => {
-        console.error('Error adding seeker:', error);
-        alert('Failed to add seeker. Please try again.');
+    setErrors({});
+
+    try {
+      const response = await dispatch(addSeeker({
+        ...formData,
+        profile_image: selectedImage, 
+        name: `${formData.first_name} ${formData.last_name}`,
+        ratings: "0", // Default ratings
+        calls: "0",   // Default call count
+        reviews: "0", // Default review count
+        date: Math.floor(Date.now() / 1000), // Current timestamp
+      })).unwrap();
+
+      // If seeker added successfully, show success message and reset form
+      setSuccessMessage('Seeker added successfully!');
+      setFormData({
+        first_name: '',
+        last_name: '',
+        phone: '',
+        email: '',
+        password: '',
+        confirm_password: ''
       });
+      setSelectedImage(null); // Clear the selected image
+    } catch (error) {
+      // Log the full error to debug
+      console.log('Full error:', error);
+
+      if (error.message) {
+        const apiErrors = JSON.parse(error.message); // Parse the error string to object
+        console.log('API Errors:', apiErrors); // Log the full API error response for debugging
+
+        const errorMessages = {};
+
+        if (apiErrors.email) {
+          errorMessages.email = apiErrors.email[0];
+        }
+        if (apiErrors.phone) {
+          errorMessages.phone = apiErrors.phone[0];
+        }
+
+        setErrors(errorMessages);
+      } else {
+        setErrors({ general: 'An unknown error occurred.' });
+      }
+    }
   };
 
-  // Handle Cancel button click
   const handleCancel = () => {
     navigate('/list-of-seeker'); // Redirect to the list of seekers page
   };
@@ -135,11 +155,12 @@ const AddNewSeeker = () => {
                       type="text"
                       name="first_name"
                       id="firstName"
-                      value={formData.firstName}
+                      value={formData.first_name}
                       onChange={handleInputChange}
                       placeholder="Enter First Name"
-                      className="border p-2 rounded-md w-full"
+                      className={`border p-2 rounded-md w-full ${errors.first_name ? 'border-red-500' : ''}`}
                     />
+                    {errors.first_name && <p className="text-red-500 text-sm">{errors.first_name}</p>}
                   </div>
                   <div className="flex flex-col w-full">
                     <label htmlFor="lastName" className="mb-1">
@@ -149,11 +170,12 @@ const AddNewSeeker = () => {
                       type="text"
                       name="last_name"
                       id="lastName"
-                      value={formData.lastName}
+                      value={formData.last_name}
                       onChange={handleInputChange}
                       placeholder="Enter Last Name"
-                      className="border p-2 rounded-md w-full"
+                      className={`border p-2 rounded-md w-full ${errors.last_name ? 'border-red-500' : ''}`}
                     />
+                    {errors.last_name && <p className="text-red-500 text-sm">{errors.last_name}</p>}
                   </div>
                 </div>
 
@@ -164,18 +186,19 @@ const AddNewSeeker = () => {
                     </label>
                     <PhoneInput
                       country={"pk"}
-                      value={formData.contactNumber}
+                      value={formData.phone}
                       onChange={(value) => setFormData({ ...formData, phone: value })}
-                      inputClass="w-full border p-2 rounded-md"
+                      inputClass={`w-full border p-2 rounded-md ${errors.phone ? 'border-red-500' : ''}`}
                       inputStyle={{ width: "100%" }}
                       containerClass="border rounded-md w-full"
                     />
+                    {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
                   </div>
                   <div className="flex flex-col w-full">
                     <label htmlFor="email" className="mb-1">
                       Email
                     </label>
-                    <div className="flex items-center border p-2 rounded-md w-full">
+                    <div className={`flex items-center border p-2 rounded-md w-full ${errors.email ? 'border-red-500' : ''}`}>
                       <FaEnvelope className="text-gray-400 mr-2" />
                       <input
                         type="email"
@@ -187,6 +210,7 @@ const AddNewSeeker = () => {
                         className="flex-1 bg-transparent outline-none"
                       />
                     </div>
+                    {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
                   </div>
                 </div>
 
@@ -211,9 +235,9 @@ const AddNewSeeker = () => {
                     </label>
                     <input
                       type="password"
-                      name="confirmPassword"
-                      id="confirmPassword"
-                      value={formData.confirmPassword}
+                      name="confirm_password"
+                      id="confirm_password"
+                      value={formData.confirm_password}
                       onChange={handleInputChange}
                       placeholder="Confirm Password"
                       className="border p-2 rounded-md w-full"
@@ -224,15 +248,18 @@ const AddNewSeeker = () => {
                 {/* Success message */}
                 {successMessage && <p className="text-green-500">{successMessage}</p>}
 
-                <div className="flex justify-end gap-4 mt-6 text-sm">
+                <div className="flex justify-end space-x-2">
                   <button
                     type="button"
-                    className="bg-[#D9D9D9] text-white px-4 py-2 rounded-md"
-                    onClick={handleCancel} // Call handleCancel to redirect
+                    className="bg-gray-400 text-white px-4 py-2 rounded-md"
+                    onClick={handleCancel}
                   >
                     Cancel
                   </button>
-                  <button className="bg-[#0085FF] text-white px-4 py-2 rounded-md" type="submit">
+                  <button
+                    type="submit"
+                    className="bg-blue-500 text-white px-4 py-2 rounded-md"
+                  >
                     Add Seeker
                   </button>
                 </div>

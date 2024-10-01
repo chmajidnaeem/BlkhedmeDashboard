@@ -56,26 +56,34 @@ export const editSubCategory = createAsyncThunk(
   async ({ id, data }, { rejectWithValue }) => {
     const token = localStorage.getItem('authToken');
     const formData = new FormData();
-    formData.append('location_id', data.location_id);
-    formData.append('name', data.name);
-    formData.append('image', data.image);
-    formData.append('description', data.description);
-    formData.append('parent_id', data.parent_id);
+
+    // Appending the required fields only if they are defined in the form
+    formData.append('location_id', data.location_id || '');
+    formData.append('name', data.name || '');
+    formData.append('image', data.image || null); // the image as handled as optional
+    formData.append('description', data.description || '');
+    formData.append('parent_id', data.parent_id || 0); // Using 0 if parent_id is not defined
+
+    // Log FormData entries
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value);
+    }
 
     try {
       const response = await axios.post(`${API_URL}/update/${id}`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
+          // 'Content-Type': 'multipart/form-data', // Uncomment if necessary
         },
       });
-      return response.data.data; 
+      return response.data; 
     } catch (error) {
       console.error('Error editing subcategory:', error.response ? error.response.data : error.message);
-      return rejectWithValue(error.response ? error.response.data : 'Unknown error');
+      return rejectWithValue(error.response ? error.response.data.message || error.message : 'Unknown error');
     }
   }
 );
+
 
 // Deleting a subcategory
 export const deleteSubCategory = createAsyncThunk(
@@ -107,7 +115,7 @@ const subCategorySlice = createSlice({
     toggleFeatured(state, action) {
       const subCategory = state.subCategories.find(cat => cat.id === action.payload.id);
       if (subCategory) {
-        subCategory.isFeatured = !subCategory.isFeatured; // Toggle the featured status
+        subCategory.isFeatured = !subCategory.isFeatured; 
       }
     },
   },

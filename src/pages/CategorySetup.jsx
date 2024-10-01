@@ -6,7 +6,7 @@ import {
   fetchCategories,
   deleteCategory,
   updateCategory,
-} from "../features/categorySlice"; // Adjust path as needed
+} from "../features/categorySlice"; 
 
 const CategoryTable = () => {
   const [dropdownOpen, setDropdownOpen] = useState(null);
@@ -118,7 +118,7 @@ const CategoryTable = () => {
                   <td className="p-2">
                     <input type="checkbox" className="w-4 h-4" />
                   </td>
-                  <td className="p-2">{category.id}</td>
+                  <td className="p-2">{index + 1}</td>
                   <td className="p-2">
                     {editingCategory && editingCategory.id === category.id ? (
                       <input
@@ -138,8 +138,8 @@ const CategoryTable = () => {
                     <label className="inline-flex items-center cursor-default">
                       <input
                         type="checkbox"
-                        checked={!!category.status}
-                        readOnly // Make the toggle read-only
+                        checked={!!category.status} 
+                        readOnly 
                         className="sr-only peer"
                       />
                       <div className="relative w-9 h-5 bg-gray-200 rounded-full peer-checked:bg-blue-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
@@ -150,8 +150,8 @@ const CategoryTable = () => {
                     <label className="inline-flex items-center cursor-default">
                       <input
                         type="checkbox"
-                        checked={!!category.is_featured}
-                        readOnly // Make the toggle read-only
+                        checked={!!category.is_featured} 
+                        readOnly //  toggle read-only
                         className="sr-only peer"
                       />
                       <div className="relative w-9 h-5 bg-gray-200 rounded-full peer-checked:bg-blue-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
@@ -203,4 +203,5 @@ const CategoryTable = () => {
     </>
   );
 };
+
 export default CategoryTable;

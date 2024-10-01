@@ -2,8 +2,12 @@ import React, { useEffect, useState } from "react";
 import { FiMoreVertical } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchSubCategories, deleteSubCategory, editSubCategory, toggleFeatured } from "../features/subCategorySlice";
-
+import {
+  fetchSubCategories,
+  deleteSubCategory,
+  editSubCategory,
+  toggleFeatured,
+} from "../features/subCategorySlice";
 
 const SubCategorySetup = () => {
   const dispatch = useDispatch();
@@ -14,7 +18,9 @@ const SubCategorySetup = () => {
   const [editingCategory, setEditingCategory] = useState(null);
   const [editName, setEditName] = useState("");
 
-  const { subCategories, loading, error } = useSelector((state) => state.subCategories);
+  const { subCategories, loading, error } = useSelector(
+    (state) => state.subCategories
+  );
 
   useEffect(() => {
     dispatch(fetchSubCategories());
@@ -23,11 +29,15 @@ const SubCategorySetup = () => {
   const toggleDropdown = (index) => {
     setDropdownOpen(dropdownOpen === index ? null : index);
   };
-  
+
   const handleEditClick = (category) => {
-    setEditingCategory(category.id);
-    setEditName(category.name);
-    setIsModalOpen(true);
+    if (category) {
+      setEditingCategory(category); // Store the entire category object
+      setEditName(category.name); // Set the name for editing
+      setIsModalOpen(true);
+    } else {
+      alert("Error: Category data is missing or incomplete.");
+    }
   };
 
   const handleDelete = (id) => {
@@ -40,12 +50,32 @@ const SubCategorySetup = () => {
   };
 
   const handleSaveEdit = () => {
+    // Ensure editingCategory is defined before proceeding
+    if (!editingCategory) {
+      alert("Error: Editing category data is missing.");
+      return;
+    }
+
     if (!editName.trim()) {
       alert("Subcategory name cannot be empty");
       return;
     }
 
-    dispatch(editSubCategory({ id: editingCategory, data: { name: editName } }))
+    // Log the editingCategory to verify its contents
+    console.log("Editing Category:", editingCategory); // Debugging line
+    console.log("Edit Name:", editName); // Debugging line
+
+    // Prepare data for submission
+    const updatedData = {
+      id: editingCategory.id, // Accessing id from editingCategory
+      name: editName,
+      location_id: parseInt(editingCategory.location_id), // Keep the original location_id
+      description: editingCategory.description || "", // Keep the original description
+      parent_id: editingCategory.parent_id || 0, // Set to 0 if not provided
+    };
+
+    // Submit the data
+    dispatch(editSubCategory({ id: updatedData.id, data: updatedData }))
       .unwrap()
       .then(() => {
         setEditingCategory(null);
@@ -53,7 +83,7 @@ const SubCategorySetup = () => {
         setIsModalOpen(false);
         dispatch(fetchSubCategories());
       })
-      .catch((err) => alert(`Failed to edit: ${err.message}`));
+      .catch((err) => alert(`Failed to edit: ${err.message}`)); // Show detailed error message
   };
 
   if (loading) return <p>Loading...</p>;
@@ -96,20 +126,20 @@ const SubCategorySetup = () => {
             </thead>
             <tbody>
               {subCategories.map((category, index) => (
-                <tr key={category.id} className="border-b text-sm text-center text-gray-600 h-12">
+                <tr key={category?.id || index} className="border-b text-sm text-center text-gray-600 h-12">
                   <td className="p-2">
                     <input type="checkbox" className="w-4 h-4" />
                   </td>
                   <td className="p-2">{index + 1}</td>
-                  <td className="p-2">{category.name}</td>
-                  <td className="p-2">{category.parend_id || "N/A"}</td>
-                  <td className="p-2">{category.NumberOfProvider || "N/A"}</td>
+                  <td className="p-2">{category?.name || "N/A"}</td>
+                  <td className="p-2">{category?.parent_id || "N/A"}</td>
+                  <td className="p-2">{category?.NumberOfProvider || "N/A"}</td>
                   <td className="p-2">
                     <label className="inline-flex items-center cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={category.isFeatured}
-                        onChange={() => dispatch(toggleFeatured(category.id))}
+                        checked={category?.isFeatured || false}
+                        onChange={() => dispatch(toggleFeatured(category?.id))}
                         className="sr-only peer"
                       />
                       <div className="relative w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
@@ -134,7 +164,7 @@ const SubCategorySetup = () => {
                           </li>
                           <li 
                             className="hover:bg-gray-100 cursor-pointer p-2"
-                            onClick={() => handleDelete(category.id)}
+                            onClick={() => handleDelete(category?.id)}
                           >
                             Delete
                           </li>
@@ -150,7 +180,7 @@ const SubCategorySetup = () => {
       </div>
 
       {/* Modal for Editing Subcategory */}
-      {isModalOpen && (
+      {isModalOpen && editingCategory && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-96">
             <h2 className="text-lg font-semibold mb-4">Edit Subcategory</h2>

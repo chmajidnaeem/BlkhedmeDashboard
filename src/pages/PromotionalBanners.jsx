@@ -1,12 +1,26 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import PromoTable from "./PromoTable";
 import NewBanner from "./NewBanner";
+import { fetchBanners, createBanner } from "../features/promotionalBannerSlice";
 
 const PromoBanners = () => {
+  const dispatch = useDispatch();
+  const banners = useSelector((state) => state.promotionalBanners.banners);
   const [isNewBannerOpen, setIsNewBannerOpen] = useState(false);
+
+  // Fetch banners when the component mounts
+  useEffect(() => {
+    dispatch(fetchBanners());
+  }, [dispatch]);
 
   const handleOpenNewBanner = () => setIsNewBannerOpen(true);
   const handleCloseNewBanner = () => setIsNewBannerOpen(false);
+
+  const handleAddBanner = (bannerData) => {
+    dispatch(createBanner({ bannerData }));
+    setIsNewBannerOpen(false); // Close the modal after submission
+  };
 
   return (
     <div>
@@ -22,25 +36,14 @@ const PromoBanners = () => {
             Add New
           </button>
         </div>
-        <div className="flex flex-row gap-2 sm:gap-4 mt-6 font-poppins font-medium text-lg border-b-2">
-          <h1 className="border-b-2 border-black w-full text-center sm:text-sm text-base sm:w-auto sm:text-left">
-            All
-          </h1>
-          <h1 className="text-[#707070] w-full text-center sm:text-sm text-base sm:w-auto sm:text-left">
-            Category Wise
-          </h1>
-          <h1 className="text-[#707070] w-full text-center sm:text-sm text-base sm:w-auto sm:text-left">
-            Service Wise
-          </h1>
-        </div>
-        <PromoTable />
-        <div className="flex justify-end mt-6">
-          <div className="bg-white flex-col justify-center items-center mr-0 sm:mr-10 inline-block py-4 px-8 rounded-lg text-[#0000009C] gap-2 sm:gap-4">
-            <h1>Edit</h1>
-            <h1>Delete</h1>
-          </div>
-        </div>
-        <NewBanner isOpen={isNewBannerOpen} onClose={handleCloseNewBanner} />
+
+        <PromoTable banners={banners} />
+
+        <NewBanner
+          isOpen={isNewBannerOpen}
+          onClose={handleCloseNewBanner}
+          onAddBanner={handleAddBanner} // Pass the handleAddBanner function to NewBanner
+        />
       </div>
     </div>
   );

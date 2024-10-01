@@ -1,4 +1,3 @@
-// src/pages/DashboardPage.jsx
 import StatsCards from '../components/StatsCards'
 import ProvidersList from '../components/ProvidersList'
 import OnboardingRequests from '../components/OnboardingRequests';

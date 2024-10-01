@@ -1,9 +1,7 @@
-// src/components/Notifications.jsx
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { pushNotification, fetchAllUsers } from '../features/notificationSlice';
 import gallery from "../Assets/gallery.png";
-// Import the NotificationsTable from the correct file
 import NotificationsTable from '../components/NotificationsTable'; 
 import { MdOutlineAttachment } from "react-icons/md";
 
