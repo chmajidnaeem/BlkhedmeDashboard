@@ -7,6 +7,7 @@ import { useDispatch } from 'react-redux';
 import { addSeeker } from '../features/seekerSlice';
 import { useNavigate } from 'react-router-dom';
 
+
 const AddNewSeeker = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [formData, setFormData] = useState({
@@ -15,7 +16,8 @@ const AddNewSeeker = () => {
     phone: '',
     email: '',
     password: '',
-    confirm_password: ''
+    confirm_password: '',
+    username: '', // Added username field
   });
 
   const [errors, setErrors] = useState({});
@@ -24,6 +26,7 @@ const AddNewSeeker = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -46,24 +49,22 @@ const AddNewSeeker = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent the form from refreshing the page
-
-    // Clear success message and errors before submitting
+    e.preventDefault();
+  
     setSuccessMessage('');
     setErrors({});
-
+  
     try {
       const response = await dispatch(addSeeker({
         ...formData,
         profile_image: selectedImage, 
         name: `${formData.first_name} ${formData.last_name}`,
-        ratings: "0", // Default ratings
-        calls: "0",   // Default call count
-        reviews: "0", // Default review count
-        date: Math.floor(Date.now() / 1000), // Current timestamp
+        ratings: "0",
+        calls: "0",
+        reviews: "0",
+        date: Math.floor(Date.now() / 1000),
       })).unwrap();
-
-      // If seeker added successfully, show success message and reset form
+  
       setSuccessMessage('Seeker added successfully!');
       setFormData({
         first_name: '',
@@ -71,35 +72,36 @@ const AddNewSeeker = () => {
         phone: '',
         email: '',
         password: '',
-        confirm_password: ''
+        confirm_password: '',
+        username: '', // Reset username field
       });
-      setSelectedImage(null); // Clear the selected image
+      setSelectedImage(null);
     } catch (error) {
-      // Log the full error to debug
       console.log('Full error:', error);
-
-      if (error.message) {
-        const apiErrors = JSON.parse(error.message); // Parse the error string to object
-        console.log('API Errors:', apiErrors); // Log the full API error response for debugging
-
-        const errorMessages = {};
-
-        if (apiErrors.email) {
-          errorMessages.email = apiErrors.email[0];
+  
+      if (typeof error.message === 'string') {
+        try {
+          const apiErrors = JSON.parse(error.message);
+          
+          const errorMessages = {};
+          if (apiErrors.email) errorMessages.email = apiErrors.email[0];
+          if (apiErrors.phone) errorMessages.phone = apiErrors.phone[0];
+          if (apiErrors.username) errorMessages.username = apiErrors.username[0]; // Handle username errors
+  
+          setErrors(errorMessages);
+        } catch (parseError) {
+          // If parsing fails, set a general error message
+          setErrors({ general: error.message });
         }
-        if (apiErrors.phone) {
-          errorMessages.phone = apiErrors.phone[0];
-        }
-
-        setErrors(errorMessages);
       } else {
         setErrors({ general: 'An unknown error occurred.' });
       }
     }
   };
+  
 
   const handleCancel = () => {
-    navigate('/list-of-seeker'); // Redirect to the list of seekers page
+    navigate('/list-of-seeker');
   };
 
   return (
@@ -115,6 +117,7 @@ const AddNewSeeker = () => {
                   src={selectedImage}
                   alt="Profile"
                   className="w-32 h-32 object-cover rounded-md mb-2"
+                  
                 />
               ) : (
                 <div className="w-32 h-32 bg-gray-300 rounded-md mb-2 flex items-center justify-center">
@@ -134,6 +137,7 @@ const AddNewSeeker = () => {
                   id="upload"
                   className="hidden"
                   onChange={handleImageUpload}
+                  required
                 />
                 <button
                   className="bg-[#B80000] text-white px-4 py-2 rounded-md"
@@ -189,8 +193,6 @@ const AddNewSeeker = () => {
                       value={formData.phone}
                       onChange={(value) => setFormData({ ...formData, phone: value })}
                       inputClass={`w-full border p-2 rounded-md ${errors.phone ? 'border-red-500' : ''}`}
-                      inputStyle={{ width: "100%" }}
-                      containerClass="border rounded-md w-full"
                     />
                     {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
                   </div>
@@ -198,20 +200,37 @@ const AddNewSeeker = () => {
                     <label htmlFor="email" className="mb-1">
                       Email
                     </label>
-                    <div className={`flex items-center border p-2 rounded-md w-full ${errors.email ? 'border-red-500' : ''}`}>
-                      <FaEnvelope className="text-gray-400 mr-2" />
+                    <div className="relative flex items-center">
+                      <FaEnvelope className="absolute left-3" />
                       <input
                         type="email"
                         name="email"
                         id="email"
                         value={formData.email}
                         onChange={handleInputChange}
-                        placeholder="Enter Email"
-                        className="flex-1 bg-transparent outline-none"
+                        placeholder="Enter Email Address"
+                        className={`border p-2 pl-10 rounded-md w-full ${errors.email ? 'border-red-500' : ''}`}
                       />
                     </div>
                     {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
                   </div>
+                </div>
+
+                {/* Username Field */}
+                <div className="flex flex-col">
+                  <label htmlFor="username" className="mb-1">
+                    Username
+                  </label>
+                  <input
+                    type="text"
+                    name="username"
+                    id="username"
+                    value={formData.username}
+                    onChange={handleInputChange}
+                    placeholder="Enter Username"
+                    className={`border p-2 rounded-md w-full ${errors.username ? 'border-red-500' : ''}`}
+                  />
+                  {errors.username && <p className="text-red-500 text-sm">{errors.username}</p>}
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-4">
@@ -226,32 +245,31 @@ const AddNewSeeker = () => {
                       value={formData.password}
                       onChange={handleInputChange}
                       placeholder="Enter Password"
-                      className="border p-2 rounded-md w-full"
+                      className={`border p-2 rounded-md w-full ${errors.password ? 'border-red-500' : ''}`}
                     />
+                    {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
                   </div>
                   <div className="flex flex-col w-full">
-                    <label htmlFor="confirm_password" className="mb-1">
+                    <label htmlFor="confirmPassword" className="mb-1">
                       Confirm Password
                     </label>
                     <input
                       type="password"
                       name="confirm_password"
-                      id="confirm_password"
+                      id="confirmPassword"
                       value={formData.confirm_password}
                       onChange={handleInputChange}
-                      placeholder="Confirm Password"
-                      className="border p-2 rounded-md w-full"
+                      placeholder="Re-enter Password"
+                      className={`border p-2 rounded-md w-full ${errors.confirm_password ? 'border-red-500' : ''}`}
                     />
+                    {errors.confirm_password && <p className="text-red-500 text-sm">{errors.confirm_password}</p>}
                   </div>
                 </div>
 
-                {/* Success message */}
-                {successMessage && <p className="text-green-500">{successMessage}</p>}
-
-                <div className="flex justify-end space-x-2">
+                <div className="flex justify-end mt-6">
                   <button
                     type="button"
-                    className="bg-gray-400 text-white px-4 py-2 rounded-md"
+                    className="bg-gray-300 px-4 py-2 rounded-md mr-2"
                     onClick={handleCancel}
                   >
                     Cancel
@@ -260,9 +278,12 @@ const AddNewSeeker = () => {
                     type="submit"
                     className="bg-blue-500 text-white px-4 py-2 rounded-md"
                   >
-                    Add Seeker
+                    Submit
                   </button>
                 </div>
+
+                {successMessage && <p className="text-green-500 mt-4">{successMessage}</p>}
+                {errors.general && <p className="text-red-500 mt-4">{errors.general}</p>}
               </form>
             </div>
           </div>

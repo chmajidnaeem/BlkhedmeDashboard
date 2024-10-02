@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { FaEnvelope } from "react-icons/fa";
 import PhoneInput from "react-phone-input-2";
@@ -7,6 +7,7 @@ import uploadImg from "../Assets/download.svg";
 import FileUpload from "../components/FileUpload";
 import { addProvider } from "../features/providerSlice"; // Adjust the path as necessary
 import { fetchCategories } from "../features/categorySlice";
+import { FaPaperclip } from 'react-icons/fa';
 
 const AddNewProvider = () => {
   const dispatch = useDispatch();
@@ -18,94 +19,100 @@ const AddNewProvider = () => {
   useEffect(() => {
     dispatch(fetchCategories());
   }, [dispatch]);
-  // State for Personal Information
+
+  // Form State
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [contactNumber, setContactNumber] = useState("");
   const [email, setEmail] = useState("");
-
-  // State for Professional Information
+  const [username, setUsername] = useState("");
   const [profession, setProfession] = useState("");
   const [areaOfOperation, setAreaOfOperation] = useState("");
   const [yearsExperience, setYearsExperience] = useState("");
   const [workingHoursFrom, setWorkingHoursFrom] = useState("");
   const [workingHoursTill, setWorkingHoursTill] = useState("");
-
-  // State for Documents (Excluded from submission)
   const [idType, setIdType] = useState("");
   const [identityNumber, setIdentityNumber] = useState("");
   const [degreeName, setDegreeName] = useState("");
-  const [documents, setDocuments] = useState([]);
-
-  // State for Password
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // State for Image
-  const [selectedImage, setSelectedImage] = useState(null);
+  // File Inputs
+  const [profileImage, setProfileImage] = useState(null);
+  const [degree, setDegree] = useState(null);
+  const [identityCard, setIdentityCard] = useState(null);
+  const identityInputRef = useRef(null);
+  const degreeInputRef = useRef(null);
 
-  // Handler for FileUpload component to pass uploaded files to parent
-  const handleFilesUpload = (uploadedFiles) => {
-    setDocuments(uploadedFiles);
-  };
-
-  const handleImageUpload = (e) => {
+  // Image Upload Handlers
+  const handleImageUpload = (e, setImage) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelectedImage(reader.result); // Base64 string
-      };
-      reader.readAsDataURL(file);
+      setImage(file);
     }
   };
 
   const handleImageRemove = () => {
-    setSelectedImage(null);
+    setProfileImage(null);
+  };
+
+  const handleIdentityCardUpload = (e) => {
+    handleImageUpload(e, setIdentityCard);
+  };
+
+  const handleDegreeUpload = (e) => {
+    handleImageUpload(e, setDegree);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Basic Validation
     if (password !== confirmPassword) {
       alert("Passwords do not match!");
       return;
     }
 
-    // Prepare the new provider data (Exclude problematic fields)
-    const newProvider = {
-      first_name: firstName,
-      last_name: lastName,
-      phone: contactNumber,
-      email: email,
-      profession: profession, // Correctly mapped to 'profession'
-      area_of_operation: areaOfOperation,
-      years_experience: yearsExperience,
-      working_hours_from: workingHoursFrom,
-      working_hours_till: workingHoursTill,
-      password: password,
-      password_confirmation: confirmPassword, // Ensure backend handles this
-      // Conditionally include 'image' only if an image was uploaded
-      ...(selectedImage && { image: selectedImage }),
-      // Excluded Fields:
-      // identity_type: idType,
-      // identity_number: identityNumber,
-      // name_of_degree: degreeName, 
-      name_of_degree: degreeName, // Correctly mapped to 'name_of_degree'
-    };
+    // Create FormData object for multipart form submission
+    const formData = new FormData();
+    formData.append("first_name", firstName);
+    formData.append("last_name", lastName);
+    formData.append("phone", contactNumber);
+    formData.append("username", username);
+    formData.append("email", email);
+    formData.append("profession", profession);
+    formData.append("area_of_operation", areaOfOperation);
+    formData.append("years_of_experience", yearsExperience);
+    formData.append("working_hours_from", workingHoursFrom);
+    formData.append("working_hours_till", workingHoursTill);
+    formData.append("identity_type", idType);
+    formData.append("identity_number", identityNumber);
+    formData.append("name_of_degree", degreeName);
+    formData.append("password", password);
+    formData.append("confirm_password", confirmPassword);
+    formData.append('username',username);
 
+    // Append images (profile image, degree, identity card)
+    if (profileImage) {
+      formData.append("profile_image", profileImage);
+    }
+    if (degree) {
+      formData.append("degree", degree);
+    }
+    if (identityCard) {
+      formData.append("identity_card", identityCard);
+    }
 
-    // Dispatch the addProvider action
-    dispatch(addProvider(newProvider))
+    // Dispatch the addProvider action with FormData
+    dispatch(addProvider(formData))
       .unwrap()
-      .then((response) => {
+      .then(() => {
         alert("Provider added successfully!");
         // Optionally, reset the form
         setFirstName("");
         setLastName("");
         setContactNumber("");
         setEmail("");
+        setUsername("");
         setProfession("");
         setAreaOfOperation("");
         setYearsExperience("");
@@ -116,47 +123,15 @@ const AddNewProvider = () => {
         setDegreeName("");
         setPassword("");
         setConfirmPassword("");
-        setSelectedImage(null);
-        setDocuments([]);
+        setProfileImage(null);
+        setDegree(null);
+        setIdentityCard(null);
       })
       .catch((err) => {
-        // Log the entire error for debugging
-        console.error("Error Message front: ", err);
-  
-        // Initialize an empty object to hold error messages
-        const errorMessages = {};
-  
-        // Check if the error has a payload (common in Redux Toolkit)
-        if (err.payload) {
-          const apiErrors = err.payload;
-  
-          // Map backend errors to form fields
-          if (apiErrors.email) {
-            errorMessages.email = apiErrors.email[0];
-          }
-          if (apiErrors.phone) {
-            errorMessages.phone = apiErrors.phone[0];
-          }
-  
-          // Add any general errors if present
-          if (apiErrors.general) {
-            errorMessages.general = apiErrors.general[0];
-          }
-        } else if (err.message) {
-          // Fallback if error structure is different
-          if (err.message.email) {
-            errorMessages.email = err.message.email[0];
-          }
-          if (err.message.phone) {
-            errorMessages.phone = err.message.phone[0];
-          }
-        }
-  
-        // Update the error state
-        setErrors(errorMessages);
+        console.error("Error: ", err);
+        setErrors(err.payload || {});
       });
   };
-
   return (
     <div className="p-4 max-w-5xl mx-auto font-poppins">
       <h1 className="mb-2 font-medium">Add New Provider</h1>
@@ -168,9 +143,9 @@ const AddNewProvider = () => {
           </h1>
           <div className="flex flex-col md:flex-row items-center justify-between p-2">
             <div className="picture flex flex-col items-center">
-              {selectedImage ? (
+              {profileImage ? (
                 <img
-                  src={selectedImage}
+                  src={URL.createObjectURL(profileImage)}
                   alt="Profile"
                   className="w-32 h-32 object-cover rounded-md mb-2"
                 />
@@ -195,8 +170,9 @@ const AddNewProvider = () => {
                   type="file"
                   id="upload"
                   className="hidden"
-                  onChange={handleImageUpload}
+                  onChange={(e) => handleImageUpload(e, setProfileImage)}
                   accept="image/*"
+                  required
                 />
                 <button
                   type="button"
@@ -279,10 +255,27 @@ const AddNewProvider = () => {
                     {err.email && <p className="text-red-500 text-sm">{err.email}</p>}
                   </div>
                 </div>
+
+                {/* Username Field */}
+                <div className="flex flex-col">
+                  <label htmlFor="username" className="mb-1">
+                    Username
+                  </label>
+                  <input
+                    type="text"
+                    name="username"
+                    id="username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Enter Username"
+                    className={`border p-2 rounded-md w-full ${err.username ? 'border-red-500' : ''}`}
+                  />
+                  {err.username && <p className="text-red-500 text-sm">{err.username}</p>}
+                </div>
               </form>
             </div>
           </div>
-        </div>
+        </div> 
 
         {/* Professional Information */}
         <div className="mt-6">
@@ -317,27 +310,27 @@ const AddNewProvider = () => {
                     Area of Operation
                   </label>
                   <select
-                  name="areaOfOperation"
-                  id="areaOfOperation"
-                  className="border p-2 rounded-md w-full"
-                  value={areaOfOperation}
-                  onChange={(e) => setAreaOfOperation(e.target.value)}
-                  required
-                >
-                  <option value="" disabled>
-                    Select
-                  </option>
-                  {/* Dynamically populate dropdown with categories */}
-                  {categories && categories.length > 0 ? (
-                    categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.title}
-                      </option>
-                    ))
-                  ) : (
-                    <option disabled>Loading categories...</option>
-                  )}
-                </select>
+                    name="areaOfOperation"
+                    id="areaOfOperation"
+                    className="border p-2 rounded-md w-full"
+                    value={areaOfOperation}
+                    onChange={(e) => setAreaOfOperation(e.target.value)}
+                    required
+                  >
+                    <option value="" disabled>
+                      Select
+                    </option>
+                    {/* Dynamically populate dropdown with categories */}
+                    {categories && categories.length > 0 ? (
+                      categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.title}
+                        </option>
+                      ))
+                    ) : (
+                      <option disabled>Loading categories...</option>
+                    )}
+                  </select>
                 </div>
               </div>
               <div className="flex flex-col md:flex-row gap-4">
@@ -462,8 +455,47 @@ const AddNewProvider = () => {
                 </div>
               </div>
 
-              <div className="">
-                <FileUpload onFilesUpload={handleFilesUpload} />
+              <div className="flex flex-col md:flex-row gap-4">
+                {/* Upload Identity */}
+                <div className="flex flex-col w-full relative">
+                  <div
+                    className="border-dashed border-2 border-gray-400 p-2 rounded-md w-full cursor-pointer"
+                    onClick={() => identityInputRef.current.click()} // Trigger file input click
+                  >
+                    <span className="text-gray-400">Upload your Identity</span>
+                    <FaPaperclip className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                  </div>
+                  <input
+                    type="file"
+                    ref={identityInputRef}
+                    className="hidden"
+                    name="identity_card" // Ensure the name matches what the backend expects
+                    id="identity"
+                    accept=".jpeg, .png, .jpg, .pdf" // Restrict to allowed file types
+                    onChange={handleIdentityCardUpload} // Correct handler
+                  />
+                </div>
+
+                {/* Upload Degree */}
+                <div className="flex flex-col w-full relative">
+                  <div
+                    className="border-dashed border-2 border-gray-400 p-2 rounded-md w-full cursor-pointer"
+                    onClick={() => degreeInputRef.current.click()} // Trigger file input click
+                  >
+                    <span className="text-gray-400">Upload your Degree</span>
+                    <FaPaperclip className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                  </div>
+                  <input
+                    type="file"
+                    ref={degreeInputRef}
+                    className="hidden"
+                    name="degree"
+                    id="degree"
+                    accept=".jpeg, .png, .jpg, .pdf" // Restrict to allowed file types
+                    onChange={handleDegreeUpload} // Correct handler
+                  />
+                </div>
+
               </div>
             </form>
           </div>

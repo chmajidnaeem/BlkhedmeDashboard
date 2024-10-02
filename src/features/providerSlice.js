@@ -36,7 +36,7 @@ export const addProvider = createAsyncThunk(
       const response = await axios.post(`${API_URL}/store`, newProvider, { 
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json', 
+          // 'Content-Type': 'application/json', 
         },
       });
 
@@ -58,7 +58,7 @@ export const updateProvider = createAsyncThunk('providers/updateProvider', async
     const response = await axios.post(`${API_URL}/update/${id}`, updatedData, { // Ensure this endpoint is correct
       headers: {
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json', 
+        // 'Content-Type': 'application/json', 
       },
     });
     console.log("Updating Provider Response: ", response.data);

@@ -28,48 +28,35 @@ export const fetchSeekers = createAsyncThunk('seekers/fetchSeekers', async () =>
 // Add a new seeker
 export const addSeeker = createAsyncThunk('seekers/addSeeker', async (newSeeker) => {
   try {
-    // Initialize a new object with default values
     const seekerToAdd = {
-      profile_image: newSeeker.profile_image || null,
+      image: newSeeker.profile_image, // this will submit the image with field name profile_image to the server change as per your needs
       ratings: "0", // Default ratings
       calls: "0",   // Default call count
       reviews: "0", // Default review count
       date: Math.floor(Date.now() / 1000), // Current timestamp
     };
 
-    // Only add fields that have values from newSeeker
     if (newSeeker.first_name) seekerToAdd.first_name = newSeeker.first_name;
     if (newSeeker.last_name) seekerToAdd.last_name = newSeeker.last_name;
     if (newSeeker.phone) seekerToAdd.phone = newSeeker.phone;
     if (newSeeker.email) seekerToAdd.email = newSeeker.email;
+    if (newSeeker.username) seekerToAdd.username = newSeeker.username; 
     if (newSeeker.password) seekerToAdd.password = newSeeker.password;
-
-    // Log the data being sent to the server
-    console.log('Adding seeker with payload:', seekerToAdd);
-
+    console.log('seeker data submission:', seekerToAdd)
     const response = await axios.post(`${API_URL}/store`, seekerToAdd, {
       headers: {
         Authorization: `Bearer ${getAuthToken()}`,
-        'Content-Type': 'application/json', // Important for file uploads
+        // 'Content-Type': 'application/json',
       },
     });
-    console.log('Added seeker response:', response.data); // Log the response
     
-    return response.data; // Return the response data (newly added seeker)
-  }catch (error) {
-    if (error.response.data.message){
-      const errorObject=error.response.data.message
-      throw new Error(JSON.stringify(errorObject));
+    return response.data;
+  } catch (error) {
+    if (error.response?.data?.message) {
+      throw new Error(JSON.stringify(error.response.data.message));
     }
-    // Log the complete error object for debugging
     console.error('Complete error object:', error);
-    
-    // Check if error response exists and contains the expected structure
-    const errorResponse = error.response ? error.response.data : {};
-    console.error('Error response data:', errorResponse);
-    
-    // Throw the relevant part of the error to be caught in the component
-    throw error; // Or throw error.response.data if you want to pass the whole response
+    throw error;
   }
 });
 
