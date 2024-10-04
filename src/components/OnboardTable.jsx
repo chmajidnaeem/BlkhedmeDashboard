@@ -1,31 +1,122 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { BsThreeDots } from "react-icons/bs";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
+import axios from "axios";
 import notificationImg from "../Assets/notificationImg.png"; // Default image for providers without one
-import { fetchProviders } from "../features/providerSlice"; // Assuming this is the correct path
+import { fetchProviders, updateProvider } from "../features/providerSlice"; // Assuming this is the correct path
 
 const OnboardTable = ({ activeTab }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate(); // Initialize useNavigate
   const [activePopup, setActivePopup] = useState(null);
+  const [status, setstatus] = useState("active");
+  const token = localStorage.getItem('authToken');
 
+
+  const toHandleStatusDeny = async (id) =>{
+    console.log(id);
+    const url = "https://apiv2.blkhedme.com/api/admin/provider/status"
+    const data = {
+       provider_id:id,
+       professional_status:"inactive"
+    }
+
+    try {
+      const res = await axios.post(url, data , {
+        headers : {
+          'Accept': 'application/json',
+          Authorization: `Bearer ${token}`,
+        }
+
+    
+      })
+      setActivePopup(null)
+      dispatch(fetchProviders())
+      console.log(res.data);
+      
+    } catch (err) {
+      console.log(err.message);
+      
+    }
+    
+  }
+  const toHandleStatusApproved = async (id) =>{
+    console.log(id);
+    const url = "https://apiv2.blkhedme.com/api/admin/provider/status"
+    const data = {
+       provider_id:id,
+       professional_status:"active"
+    }
+
+    try {
+      const res = await axios.post(url, data , {
+        headers : {
+          'Accept': 'application/json',
+          Authorization: `Bearer ${token}`,
+        }
+
+    
+      })
+      dispatch(fetchProviders());
+      setActivePopup(null)
+      console.log(res.data);
+      
+    } catch (err) {
+      console.log(err.message);
+      
+    }
+    
+  }
   // Fetching providers from the Redux store
   const { providers, loading, error } = useSelector((state) => state.providers);
 
   // Dispatch fetchProviders when the component mounts
   useEffect(() => {
     dispatch(fetchProviders());
-  }, [dispatch]);
+  }, []);
 
   // Toggle popup visibility
   const togglePopup = (id) => {
     setActivePopup(activePopup === id ? null : id);
   };
 
+  // Approve handler: update professional_status to 'active'
+  const handleApprove = (provider) => {
+    const updatedProvider = {
+      id: provider.id,
+       professional_status: "active", 
+    };
+  
+    console.log("Approve action - updatedProvider:", updatedProvider); // Log data before dispatching
+    dispatch(updateProvider({ id: provider.id, updatedData: updatedProvider })); // Pass correct structure
+    setActivePopup(null); // Close popup after action
+  };
+
+  // Deny handler: update professional_status to 'inactive'
+  const handleDeny = (provider) => {
+    const updatedProvider = {
+      // id: provider.id,
+      first_name: provider.first_name,
+      last_name: provider.last_name,
+      phone:provider?.phone ||"N/A",
+      profession: provider?.profession || "N/A",
+      area_of_operation: provider?.category.title || "N/A",
+      // identity_card: provider.identity_card,
+      professional_status: "inactive", // Set to inactive
+      location_id: Number(provider.location_id) || null,
+    };
+  
+    console.log("Deny action - updatedProvider:", updatedProvider); // Log data before dispatching
+    dispatch(updateProvider({ id: provider.id, updatedData: updatedProvider })); // Pass correct structure
+    setActivePopup(null); // Close popup after action
+  };
+
   // Filter requests based on the active tab
   const filteredRequests =
     activeTab === "onboarding"
-      ? providers
-      : providers.filter((request) => request.status === "inactive"); // Assuming "inactive" is for denied requests
+      ? providers.filter((request) => request.professional_status !== "inactive")
+      : providers.filter((request) => request.professional_status === "inactive"); // Assuming "inactive" is for denied requests
 
   return (
     <div className="mt-4 overflow-x-auto">
@@ -105,17 +196,16 @@ const OnboardTable = ({ activeTab }) => {
                   </div>
                 </td>
                 <td className="p-3 text-center ">{request.phone || "N/A"}</td>
+                <td className="p-3 text-center">{request.category?.title || "N/A"}</td>
                 <td className="p-3 text-center">
-                  {request.category?.title || "N/A"} {/* Extract the category title */}
-                </td>
-                <td className="p-3 text-center">
-                  {request.sub_categories_id || "N/A"}
+                  {request.sub_categories_id || 'N/A'}
                 </td>
                 <td className="p-3 text-center">
                   {request.average_rating || "N/A"}
                 </td>
                 <td className="p-3 text-center">
-                  {request.professional_status || "N/A"}
+                   
+                   {request.professional_status || "N/A"}
                 </td>
                 <td className="p-3 text-center">{request.city || "N/A"}</td>
                 <td className="relative p-2 md:p-4">
@@ -125,14 +215,27 @@ const OnboardTable = ({ activeTab }) => {
                   />
                   {activePopup === request.id && (
                     <div className="absolute right-0 top-8 bg-white text-center flex-col justify-center items-center mr-0 sm:mr-10 inline-block py-2 px-4 rounded-lg text-[#0000009C] shadow-lg border-2 z-50">
-                      <h1 className="cursor-pointer text-xs md:text-sm">
+                      <h1
+                        className="cursor-pointer text-xs md:text-sm"
+                        onClick={() =>
+                          navigate(`/onboarding-provider-profile?id=${request.id}`)
+                        } // Navigate on View click
+                      >
+                        View
+                      </h1>
+                      <h1
+                        className="cursor-pointer text-xs md:text-sm"
+                        id={request.id}
+                        onClick={(e) => toHandleStatusApproved(e.target.id)} // Handle approve click
+                      >
                         Approve
                       </h1>
-                      <h1 className="cursor-pointer mt-1 text-xs md:text-sm">
+                      <h1
+                        className="cursor-pointer mt-1 text-xs md:text-sm"
+                        id={request.id}
+                        onClick={(e) => toHandleStatusDeny(e.target.id)} // Handle deny click
+                      >
                         Deny
-                      </h1>
-                      <h1 className="cursor-pointer mt-1 text-xs md:text-sm">
-                        View
                       </h1>
                     </div>
                   )}

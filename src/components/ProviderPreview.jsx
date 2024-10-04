@@ -1,6 +1,9 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useDispatch } from "react-redux";
 import ProfileImg from "../Assets/profileImg.svg";
 import IdentityImg from "../Assets/identityImg.svg";
+import { toast } from "react-toastify";
+import { Link } from "react-router-dom";
 import pdfImg from "../Assets/pdf.svg";
 import otherImg1 from "../Assets/others1.svg";
 import otherImg2 from "../Assets/others2.svg";
@@ -8,17 +11,105 @@ import otherImg3 from "../Assets/others3.svg";
 import otherImg4 from "../Assets/others4.svg";
 import otherImg5 from "../Assets/others5.svg";
 import otherImg6 from "../Assets/others6.svg";
+import { fetchProviders, updateProvider } from '../features/providerSlice';
 
-const ProviderPreview = () => {
+const urlToFile = async (url, fileName) => {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+
+    // Log the MIME type to see what the URL is returning
+    const mimeType = blob.type;
+    console.log("MIME type of identity card:", mimeType);
+
+    const allowedMimeTypes = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
+    
+    if (!allowedMimeTypes.includes(mimeType)) {
+      throw new Error(`Invalid file type: ${mimeType}`);
+    }
+
+    return new File([blob], fileName, { type: mimeType });
+  } catch (error) {
+    console.error("Error converting URL to file:", error);
+    throw error;
+  }
+};
+
+const ProviderPreview = ({ providerData, providerId }) => {
+
+  const [providerInformation, setProviderInformation] = useState(null); // Renamed to providerInformation
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const dispatch = useDispatch();
+
+  // Fetch provider information when the component mounts
+  useEffect(() => {
+    const fetchProviderDetails = async () => {
+      try {
+        const provider = await dispatch(fetchProviders(providerId)).unwrap(); // Assuming fetchProviders returns a single provider's data
+        setProviderInformation(provider); // Renamed here
+      } catch (error) {
+        toast.error("Failed to fetch provider information.");
+        console.error("Error fetching provider information:", error);
+      }
+    };
+
+    fetchProviderDetails();
+  }, [dispatch, providerId]);
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+  
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match!");
+      return;
+    }
+  
+    if (!providerInformation) {
+      toast.error("Provider information not loaded yet!");
+      return;
+    }
+  
+    try {
+      const formData = new FormData();
+      formData.append("password", password);
+      formData.append("confirm_password", confirmPassword);
+  
+      // Append other fields fetched from provider information
+      formData.append("first_name", providerData.first_name);
+      formData.append("last_name", providerData.last_name);
+      formData.append("phone", providerData.phone);
+      formData.append("email", providerData.email);
+      formData.append("area_of_operation", providerData.category.id);
+      formData.append("profession", providerData.profession);
+      formData.append("identity_card",providerData.identity_card)
+  
+      // Convert identity_card URL to file and append it
+      
+      // Dispatch updateProvider action with the updated form data
+      await dispatch(updateProvider({ id: providerId, updatedData: formData }));
+      
+      toast.success("Password updated successfully!");
+      setPassword("");
+      setConfirmPassword("");
+    } catch (error) {
+      toast.error("Failed to update provider information.");
+      console.error("Error updating provider:", error);
+    }
+  };
+  
+
+  const formattedDate = new Date(providerData.created_at).toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
   return (
     <div className="p-4 min-h-screen font-poppins">
       <div className=" rounded-lg">
-       
+
         <div className="pb-2 mb-4 flex flex-col sm:flex-row items-center justify-between">
           <div className="text-center sm:text-start font-poppins">
             <h1 className="text-xl font-bold">Provider Preview</h1>
             <p className="text-[#616161]">
-              Requested to join at 20-12-2024 01:30pm
+              Requested to join at {formattedDate}
             </p>
           </div>
           <div className="mt-4 text-right">
@@ -28,9 +119,9 @@ const ProviderPreview = () => {
           </div>
         </div>
 
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          
+
           <div className="lg:col-span-2">
             <div className="bg-gray-50 p-4 border rounded-lg mb-4 shadow-md">
               <h2 className="font-semibold text-lg mb-2 border-b border-black font-inter">
@@ -44,7 +135,7 @@ const ProviderPreview = () => {
                       <div className="w-1 h-1 bg-slate-600 rounded-full inline-block mb-[2px]"></div>{" "}
                     </strong>
                     <strong className="text-[#616161] text-[12px] ml-1">
-                      John Martin
+                      {`${providerData?.first_name} ${providerData?.last_name}`}
                     </strong>
                   </p>
                   <p>
@@ -53,7 +144,7 @@ const ProviderPreview = () => {
                       <div className="w-1 h-1 bg-slate-600 rounded-full inline-block mb-[2px]"></div>{" "}
                     </strong>{" "}
                     <strong className="text-[#616161] text-[12px] ml-1">
-                      +1 9876543210
+                      {providerData?.phone || "N/A"}
                     </strong>
                   </p>
                 </div>
@@ -64,7 +155,7 @@ const ProviderPreview = () => {
                       <div className="w-1 h-1 bg-slate-600 rounded-full inline-block mb-[2px]"></div>{" "}
                     </strong>
                     <strong className="text-[#616161] text-[12px] ml-1">
-                      johnmartin@gmail.com
+                      {providerData?.email || "N/A"}
                     </strong>
                   </p>
                   <p>
@@ -81,15 +172,16 @@ const ProviderPreview = () => {
               {/* Images */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                 <img
-                  src={ProfileImg}
-                  alt="John Martin"
+                  src={providerData.image}
+                  alt={`${providerData.first_name} ${providerData.last_name}`}
                   className="rounded-lg"
                 />
-                <img src={IdentityImg} alt="ID Card" className="rounded-lg" />
+                <img src={providerData.identity_card
+                } alt="ID Card" className="rounded-lg" />
               </div>
             </div>
 
-            
+
             <div className="bg-gray-50 p-4 border rounded-lg mb-4 shadow-md">
               <h2 className="font-semibold text-lg mb-2 border-b border-black font-inter">
                 {" "}
@@ -103,8 +195,7 @@ const ProviderPreview = () => {
                       <div className="w-1 h-1 bg-slate-600 rounded-full inline-block mb-[2px]"></div>{" "}
                     </strong>
                     <strong className="text-[#616161] text-[12px] ml-1">
-                      {" "}
-                      John Martin
+                      {providerData.category.title || "N/A"}
                     </strong>
                   </p>
                   <p>
@@ -113,8 +204,7 @@ const ProviderPreview = () => {
                       <div className="w-1 h-1 bg-slate-600 rounded-full inline-block mb-[2px]"></div>{" "}
                     </strong>
                     <strong className="text-[#616161] text-[12px] ml-1">
-                      {" "}
-                      +1 9876543210
+                      {providerData.years_experience || "N/A"}
                     </strong>
                   </p>
                   <p>
@@ -123,8 +213,7 @@ const ProviderPreview = () => {
                       <div className="w-1 h-1 bg-slate-600 rounded-full inline-block mb-[2px]"></div>{" "}
                     </strong>
                     <strong className="text-[#616161] text-[12px] ml-1">
-                      {" "}
-                      9:00am - 5:30pm
+                      {`${providerData.working_hours_from || "00:00"} - ${providerData.working_hours_till || "00:00"}`}
                     </strong>
                   </p>
                 </div>
@@ -135,8 +224,7 @@ const ProviderPreview = () => {
                       <div className="w-1 h-1 bg-slate-600 rounded-full inline-block mb-[2px]"></div>{" "}
                     </strong>
                     <strong className="text-[#616161] text-[12px] ml-1">
-                      {" "}
-                      Mechanic
+                      {providerData?.profession || "N/A"}
                     </strong>
                   </p>
                   <p>
@@ -145,15 +233,14 @@ const ProviderPreview = () => {
                       <div className="w-1 h-1 bg-slate-600 rounded-full inline-block mb-[2px]"></div>{" "}
                     </strong>
                     <strong className="text-[#616161] text-[12px] ml-1">
-                      {" "}
-                      Vehicle Mechanic
+                      {providerData?.category.title || "N/A"}
                     </strong>
                   </p>
                 </div>
               </div>
             </div>
 
-            
+
             <div className="p-4">
               <h2 className="font-semibold text-lg mb-2 border-b border-black font-inter">Other Information</h2>
               <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
@@ -191,44 +278,56 @@ const ProviderPreview = () => {
             </div>
           </div>
 
-          
-          <div className="font-inter">
-            <div className="bg-gray-50 p-4 border rounded-lg mb-4 shadow-md">
-              <h2 className="font-semibold text-lg mb-2">Change Password</h2>
-              <div>
-                <label htmlFor="password" className="text-sm font-medium">New Password</label>
-              <input
-                type="password"
-                placeholder="Enter Password"
-                className="border p-2 w-full rounded mb-4 mt-2"
-              />
-              </div>
-              <div>
-                <label htmlFor="rePassword" className="text-sm font-medium">Re-Type New Password</label>
-              <input
-                type="password"
-                placeholder="Re-Type New Password"
-                className="border p-2 w-full rounded mb-4 mt-2"
-              />
-              </div>
-              <div className="flex justify-end">
-              <button className="bg-[#0085FF] text-white px-4 py-2 rounded w-[150px] justify-right">
-                Update
-              </button>
-              </div>
-            </div>
 
-          
+          <div className="font-inter">
+          {/* the updating password seciton is commented uncomment it if you want allow user to update password */}
+            {/* <div className="p-4">
+              <h1 className="text-xl font-bold mb-4">Update Provider Password</h1>
+              {providerInformation ? (
+                <form onSubmit={handleSubmit}>
+                  <div className="mb-4">
+                    <label className="block mb-1">New Password:</label>
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="p-2 border border-gray-300 rounded w-full"
+                      required
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block mb-1">Confirm Password:</label>
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="p-2 border border-gray-300 rounded w-full"
+                      required
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="bg-blue-600 text-white px-4 py-2 rounded"
+                  >
+                    Update Password
+                  </button>
+                </form>
+              ) : (
+                <p>Loading provider information...</p>
+              )}
+            </div> */}
             <div className="bg-gray-50 p-4 border rounded-lg shadow-md">
               <h2 className="font-semibold text-lg mb-4 border-b font-inter border-black">Documents</h2>
               <div className="flex gap-4">
                 <div className="text-center">
-                  <img
-                    src={pdfImg}
-                    alt="Degree"
-                    className="rounded-lg mx-auto"
-                  />
-                  <p className="mt-2 text-sm text-[#616161]">Degree</p>
+                  <Link to={providerData.degree || ""} >
+                    <img
+                      src={pdfImg}
+                      alt="Degree"
+                      className="rounded-lg mx-auto"
+                    />
+                  </Link>
+                  <p className="mt-2 text-sm text-[#616161]">{`${providerData.degree ? "Degree" : "No Degree"}`}</p>
                 </div>
                 <div className="text-center">
                   <img
@@ -236,7 +335,7 @@ const ProviderPreview = () => {
                     alt="Certificate"
                     className="rounded-lg mx-auto"
                   />
-                  <p className="mt-2 text-sm text-[#616161]">Certificate</p>
+                  <p className="mt-2 text-sm text-[#616161]">{`${providerData.degree ? "Certificate" : "NO Certificate"}`}</p>
                 </div>
               </div>
             </div>

@@ -37,6 +37,7 @@ import subCategoryReducer from "./features/subCategorySlice"
 import notificationReducer from './features/notificationSlice';
 import locationReducer from "./features/locationSlice"
 import promotionalBannerReducer from './features/promotionalBannerSlice';
+import providerViewReducer from './features/providerViewSlice';
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
@@ -68,6 +69,7 @@ const store = configureStore({
     notifications: notificationReducer,
     locations: locationReducer,
     promotionalBanners: promotionalBannerReducer,
+    provider: providerViewReducer,
   },
 });
 export default store;

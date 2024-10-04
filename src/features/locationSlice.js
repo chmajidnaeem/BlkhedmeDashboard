@@ -32,7 +32,6 @@ export const addLocation = createAsyncThunk('locations/addLocation', async (loca
     const newLocationData = {
       title: locationData.title,
       description: locationData.description || '',
-      country_id: locationData.country_id || null, 
     };
 
     const response = await axios.post(API_URL, newLocationData, {
