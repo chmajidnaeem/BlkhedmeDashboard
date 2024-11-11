@@ -1,4 +1,3 @@
-Overview
 React Dashboard with Tailwind CSS & API Integration
 A sleek black-themed React dashboard built with ReactJS and Tailwind CSS, featuring API integrations for real-time data management. Hosted on Vercel.
 
