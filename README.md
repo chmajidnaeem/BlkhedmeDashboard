@@ -1,3 +1,15 @@
+Overview
+React Dashboard with Tailwind CSS & API Integration
+A sleek black-themed React dashboard built with ReactJS and Tailwind CSS, featuring API integrations for real-time data management. Hosted on Vercel.
+
+Live Demo: https://dashboard-woad-phi-22.vercel.app/sign-in
+
+Features
+User Authentication: Secure login system.
+API Integration: Fetch real-time data from APIs.
+Responsive Design: Works seamlessly across devices.
+ 
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
